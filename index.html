@@ -104,11 +104,11 @@
       }
     }
 
-    /* Viewport-triggered reveal animation (monobank scroll smoothness) */
+    /* Viewport-triggered reveal animation */
     .reveal-item {
       opacity: 0;
-      transform: translateY(18px) scale(0.96);
-      transition: opacity 520ms var(--spring), transform 560ms var(--spring);
+      transform: translateY(16px) scale(0.97);
+      transition: opacity 480ms var(--spring), transform 520ms var(--spring);
       transition-delay: var(--stagger-delay, 0ms);
     }
     .reveal-item.is-visible {
@@ -147,7 +147,7 @@
       }
     }
 
-    /* Horizontal draggable / snap card carousel (monobank card deck feel) */
+    /* Horizontal draggable / snap card carousel */
     .snap-carousel {
       display: flex;
       gap: 14px;
@@ -178,6 +178,15 @@
       .snap-card {
         flex: 0 0 270px;
       }
+    }
+
+    /* Hide scrollbar for horizontal day pills */
+    .no-scrollbar {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
     }
 
     /* Sliding bottom navigation indicator */
@@ -340,15 +349,27 @@
   <!-- Main Content Container -->
   <main class="max-w-[680px] mx-auto px-4 sm:px-6 pt-5 pb-safe">
 
-    <!-- ==================== TAB 1: ТРЕНУВАННЯ (APPLE WATCH SUMMARY + EXERCISES) ==================== -->
+    <!-- ==================== TAB 1: ТРЕНУВАННЯ (DAY SWITCHER + APPLE WATCH + EXERCISES) ==================== -->
     <section id="tab-workout" class="tab-panel active space-y-4">
+
+      <!-- Schedule Day Switcher Pills -->
+      <div class="reveal-item">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-muted">Програма за розкладом</span>
+          <button onclick="switchTab('schedule', 1)" class="text-xs font-semibold text-accent hover:underline">
+            Налаштувати дні →
+          </button>
+        </div>
+        <div id="workout-day-pills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          <!-- Day pills injected via JS -->
+        </div>
+      </div>
 
       <!-- Apple Watch Summary Metrics Card (No Stopwatch) -->
       <div class="card-surface card-tilt reveal-item p-5">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-2.5">
             <span class="w-8 h-8 rounded-xl bg-ink text-white flex items-center justify-center">
-              <!-- Apple Watch minimal icon -->
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <rect x="6" y="5" width="12" height="14" rx="3" />
                 <path stroke-linecap="round" d="M9 2h6M9 22h6" />
@@ -399,10 +420,10 @@
       </div>
 
       <!-- Progress Bar Header for Exercises -->
-      <div class="pt-2 flex items-center justify-between reveal-item">
+      <div class="pt-1 flex items-center justify-between reveal-item">
         <div>
-          <h2 class="text-base font-bold text-ink">Вправи з гантелями</h2>
-          <p id="workout-completion-label" class="text-xs text-muted mt-0.5">Виконано 0 з 6 вправ</p>
+          <h2 id="workout-exercises-heading" class="text-base font-bold text-ink">Вправи на тренування</h2>
+          <p id="workout-completion-label" class="text-xs text-muted mt-0.5">Виконано 0 з 0 вправ</p>
         </div>
         <button onclick="openAddExerciseModal()" class="pressable px-3.5 py-2 rounded-xl bg-accentSoft text-accent text-xs font-semibold flex items-center gap-1.5">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -426,29 +447,41 @@
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
           </svg>
-          Завершити та зберегти тренування
+          Зберегти тренування
         </button>
       </div>
     </section>
 
-    <!-- ==================== TAB 2: РОЗКЛАД (WEEKLY SCHEDULE) ==================== -->
+    <!-- ==================== TAB 2: РОЗКЛАД (DYNAMIC TRAINING DAYS ONLY) ==================== -->
     <section id="tab-schedule" class="tab-panel space-y-4">
 
+      <!-- Top Header Card + Large Centered "+ Додати день" Button -->
       <div class="card-surface card-tilt reveal-item p-5">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <h2 class="text-base font-bold text-ink">Тижневий графік</h2>
-            <p class="text-xs text-muted mt-1 leading-relaxed">Налаштуй дні тренувань та час. Цей розклад використовується для експорту в календар і нагадувань у Telegram через GitHub Actions.</p>
+            <h2 class="text-base font-bold text-ink">Мій розклад тренувань</h2>
+            <p class="text-xs text-muted mt-1 leading-relaxed">Додавай тільки ті дні, коли тренуєшся, вказуй 24-годинний час та збирай власний список вправ під кожен день.</p>
           </div>
           <span id="active-days-badge" class="tabular shrink-0 px-3 py-1 rounded-full bg-accentSoft text-accent text-xs font-semibold">3 дні / тиж</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4">
-          <button onclick="downloadICS()" class="pressable py-2.5 px-4 rounded-xl bg-accent text-white text-xs font-semibold flex items-center justify-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+        <!-- Big Centered Primary "+ Додати день" Button -->
+        <div class="mt-5 flex justify-center">
+          <button onclick="openScheduleDayModal()" class="pressable w-full sm:w-auto sm:min-w-[260px] py-3.5 px-6 rounded-2xl bg-accent text-white text-sm font-bold shadow-sm flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Додати день
+          </button>
+        </div>
+
+        <!-- Secondary Calendar & Bot JSON Export Buttons -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4 pt-4 border-t border-borderline/70">
+          <button onclick="downloadICS()" class="pressable py-2.5 px-4 rounded-xl bg-subtle border border-borderline text-ink text-xs font-semibold flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            Експортувати розклад (.ics)
+            Експортувати календар (.ics)
           </button>
           <button onclick="openScheduleJsonModal()" class="pressable py-2.5 px-4 rounded-xl bg-subtle border border-borderline text-ink text-xs font-semibold flex items-center justify-center gap-2">
             <svg class="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
@@ -459,7 +492,7 @@
         </div>
       </div>
 
-      <!-- 7-Day Planner List -->
+      <!-- User-Created Training Days List -->
       <div id="schedule-list" class="space-y-3"></div>
     </section>
 
@@ -501,9 +534,7 @@
           </div>
         </div>
 
-        <div id="chart-container" class="w-full h-48 flex items-center justify-center">
-          <!-- SVG Chart injected via JS -->
-        </div>
+        <div id="chart-container" class="w-full h-48 flex items-center justify-center"></div>
       </div>
 
       <!-- History Header & Backup Actions -->
@@ -552,7 +583,7 @@
         </div>
       </div>
 
-      <!-- Monobank-style Horizontal Draggable Snap Carousel of Featured/Next Milestones -->
+      <!-- Horizontal Draggable Snap Carousel of Featured/Next Milestones -->
       <div class="reveal-item">
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-sm font-bold text-ink">Найближчі цілі та нагороди</h3>
@@ -580,7 +611,7 @@
   <!-- Sticky Bottom Navigation Bar (4 Tabs) -->
   <nav class="glass-nav fixed bottom-0 left-0 right-0 z-30 border-t border-borderline nav-safe">
     <div class="max-w-[680px] mx-auto px-2 sm:px-4 relative">
-      <!-- Sliding Top Indicator (1/4 width) -->
+      <!-- Sliding Top Indicator -->
       <div class="w-full h-[3px] relative overflow-hidden">
         <div id="nav-indicator" class="nav-indicator w-1/4 h-full flex justify-center">
           <div class="w-10 h-full bg-accent rounded-b-full"></div>
@@ -619,13 +650,152 @@
     </div>
   </nav>
 
-  <!-- ==================== MODAL 1: GITHUB SYNC CONFIGURATION ==================== -->
+  <!-- ==================== MODAL 1: ADD / EDIT SCHEDULE DAY + PER-DAY EXERCISES ==================== -->
+  <div id="schedule-day-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'schedule-day-modal')">
+    <div class="modal-sheet bg-surface border border-borderline w-full max-w-[500px] rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 id="sched-modal-title" class="text-lg font-bold text-ink">Новий день тренувань</h3>
+          <p class="text-xs text-muted mt-0.5">Обери день тижня, 24-годинний час та список вправ</p>
+        </div>
+        <button onclick="closeModal('schedule-day-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
+      </div>
+
+      <!-- Weekday & 24-Hour Time Selectors -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-ink mb-1">День тижня</label>
+          <select id="sched-modal-day" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm font-semibold text-ink focus:outline-none focus:border-accent">
+            <option value="1">Понеділок (Пн)</option>
+            <option value="2">Вівторок (Вт)</option>
+            <option value="3">Середа (Ср)</option>
+            <option value="4">Четвер (Чт)</option>
+            <option value="5">П’ятниця (Пт)</option>
+            <option value="6">Субота (Сб)</option>
+            <option value="0">Неділя (Нд)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-ink mb-1">Час (24-год формат)</label>
+          <div class="flex items-center gap-1.5">
+            <select id="sched-modal-hour" aria-label="Година" class="tabular flex-1 px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm font-bold text-ink text-center focus:outline-none focus:border-accent">
+              <!-- 00..23 injected via JS -->
+            </select>
+            <span class="text-base font-bold text-ink">:</span>
+            <select id="sched-modal-minute" aria-label="Хвилини" class="tabular flex-1 px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm font-bold text-ink text-center focus:outline-none focus:border-accent">
+              <option value="00">00</option>
+              <option value="05">05</option>
+              <option value="10">10</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+              <option value="25">25</option>
+              <option value="30" selected>30</option>
+              <option value="35">35</option>
+              <option value="40">40</option>
+              <option value="45">45</option>
+              <option value="50">50</option>
+              <option value="55">55</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional Day Label / Focus -->
+      <div>
+        <label class="block text-xs font-semibold text-ink mb-1">Назва тренування (необов’язково)</label>
+        <input id="sched-modal-title-input" type="text" placeholder="Наприклад: Верх тіла (жим + тяга)" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+      </div>
+
+      <!-- Per-Day Exercises Builder -->
+      <div class="pt-2 border-t border-borderline">
+        <div class="flex items-center justify-between mb-2.5">
+          <label class="text-xs font-bold text-ink">Вправи на цей день</label>
+          <span id="sched-modal-ex-count" class="tabular text-[11px] font-semibold text-muted">0 вправ</span>
+        </div>
+
+        <!-- Added Exercises List in Modal -->
+        <div id="sched-modal-ex-list" class="space-y-2 mb-3 max-h-48 overflow-y-auto pr-0.5"></div>
+
+        <!-- Inline Quick-Add Exercise Form -->
+        <div class="bg-subtle rounded-2xl p-3 border border-borderline/80 space-y-2.5">
+          <p class="text-[11px] font-semibold text-muted">Додати вправу до програми дня:</p>
+          <input id="sched-ex-name" type="text" placeholder="Назва (напр. Жим гантелей лежачи)" class="w-full px-3 py-2 rounded-xl bg-surface border border-borderline text-xs font-medium text-ink focus:outline-none focus:border-accent" />
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <span class="block text-[10px] font-semibold text-muted mb-0.5">Підходи</span>
+              <input id="sched-ex-sets" type="number" min="1" max="15" value="3" class="tabular w-full px-2.5 py-2 rounded-xl bg-surface border border-borderline text-xs font-semibold text-ink text-center focus:outline-none focus:border-accent" />
+            </div>
+            <div>
+              <span class="block text-[10px] font-semibold text-muted mb-0.5">Повторення</span>
+              <input id="sched-ex-reps" type="text" value="12" placeholder="10-12" class="tabular w-full px-2.5 py-2 rounded-xl bg-surface border border-borderline text-xs font-semibold text-ink text-center focus:outline-none focus:border-accent" />
+            </div>
+            <div>
+              <span class="block text-[10px] font-semibold text-muted mb-0.5">Вага (кг)</span>
+              <input id="sched-ex-weight" type="number" step="0.25" min="0" max="200" value="5" class="tabular w-full px-2.5 py-2 rounded-xl bg-surface border border-borderline text-xs font-semibold text-ink text-center focus:outline-none focus:border-accent" />
+            </div>
+          </div>
+          <button type="button" onclick="addExerciseToScheduleDraft()" class="pressable w-full py-2.5 rounded-xl bg-accentSoft text-accent text-xs font-bold flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Додати вправу
+          </button>
+        </div>
+      </div>
+
+      <!-- Save Day Button -->
+      <button type="button" onclick="saveScheduleDayModal()" class="pressable w-full py-3.5 rounded-2xl bg-accent text-white text-sm font-bold shadow-sm">
+        Зберегти день у розклад
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: ADD CUSTOM EXERCISE TO ACTIVE WORKOUT ==================== -->
+  <div id="add-exercise-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'add-exercise-modal')">
+    <div class="modal-sheet bg-surface border border-borderline w-full max-w-[440px] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-ink">Додати вправу</h3>
+          <p id="add-ex-day-hint" class="text-xs text-muted mt-0.5">Додається до обраного дня</p>
+        </div>
+        <button onclick="closeModal('add-exercise-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-ink mb-1">Назва вправи</label>
+          <input id="new-ex-name" type="text" placeholder="Наприклад: Тяга гантелі в нахилі з упором" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+        </div>
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Підходи</label>
+            <input id="new-ex-sets" type="number" value="3" min="1" max="15" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Повторення</label>
+            <input id="new-ex-reps" type="text" value="12" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Вага (кг)</label>
+            <input id="new-ex-weight" type="number" step="0.25" value="5" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+        </div>
+      </div>
+
+      <button onclick="addNewExerciseToActiveDay()" class="pressable w-full py-3 rounded-xl bg-accent text-white text-sm font-semibold">
+        Додати до тренування
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: GITHUB SYNC CONFIGURATION ==================== -->
   <div id="sync-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'sync-modal')">
     <div class="modal-sheet bg-surface border border-borderline w-full max-w-[480px] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-lg font-bold text-ink">Синхронізація з GitHub</h3>
-          <p class="text-xs text-muted mt-0.5">Зберігай прогрес, ачівки і розклад у свій приватний репозиторій</p>
+          <p class="text-xs text-muted mt-0.5">Зберігай прогрес, ачівки і розклад у свій репозиторій</p>
         </div>
         <button onclick="closeModal('sync-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
       </div>
@@ -640,11 +810,11 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-ink mb-1">Власник (Owner)</label>
-            <input id="gh-owner" type="text" value="y-lebid" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+            <input id="gh-owner" type="text" value="yehorl1" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
           </div>
           <div>
             <label class="block text-xs font-semibold text-ink mb-1">Репозиторій (Repo)</label>
-            <input id="gh-repo" type="text" placeholder="workout-tracker" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+            <input id="gh-repo" type="text" placeholder="fit-pulse" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
           </div>
         </div>
 
@@ -667,48 +837,13 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL 2: ADD CUSTOM EXERCISE ==================== -->
-  <div id="add-exercise-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'add-exercise-modal')">
-    <div class="modal-sheet bg-surface border border-borderline w-full max-w-[440px] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-xl">
-      <div class="flex items-center justify-between">
-        <h3 class="text-lg font-bold text-ink">Нова вправа</h3>
-        <button onclick="closeModal('add-exercise-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
-      </div>
-
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-ink mb-1">Назва вправи</label>
-          <input id="new-ex-name" type="text" placeholder="Наприклад: Підйом гантелей на біцепс" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
-        </div>
-        <div class="grid grid-cols-3 gap-2.5">
-          <div>
-            <label class="block text-xs font-semibold text-ink mb-1">Підходи</label>
-            <input id="new-ex-sets" type="number" value="3" min="1" max="10" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-ink mb-1">Повторення</label>
-            <input id="new-ex-reps" type="text" value="12" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-ink mb-1">Вага (кг)</label>
-            <input id="new-ex-weight" type="number" step="0.25" value="5" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
-          </div>
-        </div>
-      </div>
-
-      <button onclick="addNewExercise()" class="pressable w-full py-3 rounded-xl bg-accent text-white text-sm font-semibold">
-        Додати до тренування
-      </button>
-    </div>
-  </div>
-
-  <!-- ==================== MODAL 3: SCHEDULE JSON PREVIEW ==================== -->
+  <!-- ==================== MODAL 4: SCHEDULE JSON PREVIEW ==================== -->
   <div id="json-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'json-modal')">
     <div class="modal-sheet bg-surface border border-borderline w-full max-w-[480px] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-xl">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-lg font-bold text-ink">JSON розкладу для бота</h3>
-          <p class="text-xs text-muted mt-0.5">Автоматично зберігається в <code>data/workouts.json</code> при синхронізації</p>
+          <p class="text-xs text-muted mt-0.5">24-годинний розклад та вправи по днях</p>
         </div>
         <button onclick="closeModal('json-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
       </div>
@@ -721,10 +856,9 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL 4: CELEBRATION ACHIEVEMENT UNLOCK ==================== -->
+  <!-- ==================== MODAL 5: CELEBRATION ACHIEVEMENT UNLOCK ==================== -->
   <div id="celebration-modal" class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4" onclick="closeModalOnBackdrop(event, 'celebration-modal')">
     <div id="celebration-card" class="modal-sheet relative overflow-hidden bg-surface border border-borderline w-full max-w-[380px] rounded-3xl p-6 text-center shadow-2xl">
-      <!-- Confetti particles container -->
       <div id="confetti-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
       <div class="relative z-10">
@@ -732,9 +866,7 @@
           Нове досягнення!
         </span>
 
-        <div id="celebration-badge-wrap" class="badge-pop mx-auto w-20 h-20 rounded-3xl bg-accentSoft text-accent flex items-center justify-center mb-4">
-          <!-- Emblem injected via JS -->
-        </div>
+        <div id="celebration-badge-wrap" class="badge-pop mx-auto w-20 h-20 rounded-3xl bg-accentSoft text-accent flex items-center justify-center mb-4"></div>
 
         <h3 id="celebration-title" class="text-xl font-bold text-ink tracking-tight">Перший крок</h3>
         <p id="celebration-desc" class="text-xs text-muted mt-1.5 leading-relaxed">Завершено перше домашнє тренування</p>
@@ -750,87 +882,75 @@
 
   <script>
     /* ==========================================================================
-       STATE & DEFAULT DATA
+       STATE & DEFAULT DATA (DYNAMIC PER-DAY SCHEDULE + 24H TIME)
        ========================================================================== */
     const STORAGE_KEYS = {
-      DRAFT: 'wt_active_draft_v2',
+      DRAFT: 'wt_active_draft_v3',
       HISTORY: 'wt_history_v1',
-      SCHEDULE: 'wt_schedule_v1',
+      SCHEDULE: 'wt_schedule_v3',
       GH_CONFIG: 'wt_gh_config_v1',
       ACHIEVEMENTS: 'wt_achievements_v1'
     };
 
-    const DEFAULT_EXERCISES = [
-      {
-        id: 'ex-1',
-        name: 'Розминка та суглобова гімнастика',
-        subtitle: '5 хв · Власна вага',
-        sets: 1,
-        reps: '5 хв',
-        weight: 0,
-        presets: [0],
+    const WEEKDAYS_META = {
+      1: { short: 'Пн', name: 'Понеділок', order: 1 },
+      2: { short: 'Вт', name: 'Вівторок', order: 2 },
+      3: { short: 'Ср', name: 'Середа', order: 3 },
+      4: { short: 'Чт', name: 'Четвер', order: 4 },
+      5: { short: 'Пт', name: 'П’ятниця', order: 5 },
+      6: { short: 'Сб', name: 'Субота', order: 6 },
+      0: { short: 'Нд', name: 'Неділя', order: 7 }
+    };
+
+    function makeExercise(name, sets, reps, weight, subtitle = '') {
+      const w = Number(weight) || 0;
+      return {
+        id: 'ex-' + Math.random().toString(36).slice(2, 9),
+        name,
+        subtitle,
+        sets: Number(sets) || 3,
+        reps: String(reps || '12'),
+        weight: w,
+        presets: w > 0 ? [3.75, 5, 7.5] : [0],
         completed: false
-      },
-      {
-        id: 'ex-2',
-        name: 'Жим гантелей стоячи над головою',
-        subtitle: 'Плечі та трицепс',
-        sets: 3,
-        reps: '10–12',
-        weight: 5,
-        presets: [3.75, 5, 7.5],
-        completed: false
-      },
-      {
-        id: 'ex-3',
-        name: 'Згинання рук «Молотки»',
-        subtitle: 'Біцепс та передпліччя',
-        sets: 3,
-        reps: '12',
-        weight: 7.5,
-        presets: [3.75, 5, 7.5],
-        completed: false
-      },
-      {
-        id: 'ex-4',
-        name: 'Махи гантелями в сторони',
-        subtitle: 'Середня дельта',
-        sets: 3,
-        reps: '12–15',
-        weight: 3.75,
-        presets: [3.75, 5, 7.5],
-        completed: false
-      },
-      {
-        id: 'ex-5',
-        name: 'Згинання зап’ясть з гантелями',
-        subtitle: 'Передпліччя та хват',
-        sets: 3,
-        reps: '15',
-        weight: 5,
-        presets: [3.75, 5, 7.5],
-        completed: false
-      },
-      {
-        id: 'ex-6',
-        name: 'Розтяжка після тренування',
-        subtitle: '5 хв · Відновлення',
-        sets: 1,
-        reps: '5 хв',
-        weight: 0,
-        presets: [0],
-        completed: false
-      }
-    ];
+      };
+    }
 
     const DEFAULT_SCHEDULE = [
-      { dayIndex: 1, short: 'Пн', name: 'Понеділок', active: true, time: '18:30', focus: 'Силове з гантелями (верх тіла, 30 хв)' },
-      { dayIndex: 2, short: 'Вт', name: 'Вівторок', active: false, time: '19:00', focus: 'Відновлення / легка ходьба 30 хв' },
-      { dayIndex: 3, short: 'Ср', name: 'Середа', active: true, time: '18:30', focus: 'Силове з гантелями (плечі та руки, 30 хв)' },
-      { dayIndex: 4, short: 'Чт', name: 'Четвер', active: false, time: '19:00', focus: 'Відновлення / мобільність суглобів' },
-      { dayIndex: 5, short: 'Пт', name: 'П’ятниця', active: true, time: '18:00', focus: 'Силове з гантелями (базовий комплекс, 35 хв)' },
-      { dayIndex: 6, short: 'Сб', name: 'Субота', active: false, time: '11:00', focus: 'Активний відпочинок на свіжому повітрі' },
-      { dayIndex: 0, short: 'Нд', name: 'Неділя', active: false, time: '12:00', focus: 'Повний відпочинок' }
+      {
+        id: 'day-mon',
+        dayIndex: 1,
+        time: '18:00',
+        title: 'Груди та спина',
+        exercises: [
+          makeExercise('Жим гантелей лежачи', 3, '10–12', 7.5),
+          makeExercise('Тяга гантелі в нахилі з упором', 3, '12', 7.5),
+          makeExercise('Розведення гантелей лежачи', 3, '12–15', 5)
+        ]
+      },
+      {
+        id: 'day-wed',
+        dayIndex: 3,
+        time: '18:00',
+        title: 'Плечі та руки',
+        exercises: [
+          makeExercise('Жим гантелей стоячи над головою', 3, '10–12', 5),
+          makeExercise('Згинання рук «Молотки»', 3, '12', 7.5),
+          makeExercise('Махи гантелями в сторони', 3, '12–15', 3.75),
+          makeExercise('Згинання зап’ясть з гантелями', 3, '15', 5)
+        ]
+      },
+      {
+        id: 'day-fri',
+        dayIndex: 5,
+        time: '18:00',
+        title: 'Базове силове',
+        exercises: [
+          makeExercise('Жим гантелей лежачи', 3, '12', 7.5),
+          makeExercise('Згинання рук «Молотки»', 3, '12', 7.5),
+          makeExercise('Махи гантелями в сторони', 3, '15', 3.75)
+        ]
+      }
     ];
 
     /* 10 Tailored Achievements for Home Dumbbell Workouts & Apple Watch Metrics */
@@ -854,7 +974,7 @@
         unit: 'сесія',
         icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
         evaluate: (ctx) => {
-          const hasFull = ctx.history.some(w => w.exercises && w.exercises.length >= 4 && w.exercises.every(e => e.completed));
+          const hasFull = ctx.history.some(w => w.exercises && w.exercises.length >= 2 && w.exercises.every(e => e.completed));
           return hasFull ? 1 : 0;
         }
       },
@@ -884,7 +1004,7 @@
       {
         id: 'titan_shoulders',
         title: 'Плечі титана',
-        desc: 'Виконай жим гантелей над головою з робочою вагою 7.5 кг.',
+        desc: 'Виконай жим гантелей з робочою вагою 7.5 кг.',
         color: 'warning',
         target: 7.5,
         unit: 'кг',
@@ -973,7 +1093,7 @@
       {
         id: 'cloud_backup',
         title: 'Хмарний бекап',
-        desc: 'Підключи синхронізацію прогресу у приватний репозиторій GitHub.',
+        desc: 'Підключи синхронізацію прогресу у репозиторій GitHub.',
         color: 'accent',
         target: 1,
         unit: 'підкл.',
@@ -986,30 +1106,38 @@
       activeTab: 'workout',
       chartMetric: 'duration',
       achFilter: 'all',
+      selectedScheduleId: null,
       draft: {
         durationMinutes: 30,
         calories: 180,
-        heartRate: 125,
-        exercises: JSON.parse(JSON.stringify(DEFAULT_EXERCISES))
+        heartRate: 125
       },
       schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),
       history: [],
-      unlockedAchievements: {}, // { [id]: ISOString }
+      unlockedAchievements: {},
       ghConfig: {
         token: '',
-        owner: 'y-lebid',
+        owner: 'yehorl1',
         repo: '',
         path: 'data/workouts.json'
       }
+    };
+
+    /* Temporary state for the Add/Edit Schedule Day Modal */
+    let scheduleModalState = {
+      editingId: null,
+      exercises: []
     };
 
     /* ==========================================================================
        INITIALIZATION & MOTION ENGINE
        ========================================================================== */
     window.addEventListener('DOMContentLoaded', () => {
+      populate24HourSelect();
       updateHeaderDate();
       loadStateFromStorage();
-      renderExercises();
+      selectInitialWorkoutDay();
+      renderWorkoutTab();
       renderSchedule();
       evaluateAchievements(false);
       renderAchievements();
@@ -1018,9 +1146,64 @@
       initMotionEngine();
     });
 
+    function populate24HourSelect() {
+      const hourSelect = document.getElementById('sched-modal-hour');
+      if (!hourSelect) return;
+      hourSelect.innerHTML = '';
+      for (let h = 0; h < 24; h++) {
+        const hh = String(h).padStart(2, '0');
+        const opt = document.createElement('option');
+        opt.value = hh;
+        opt.textContent = hh;
+        if (h === 18) opt.selected = true;
+        hourSelect.appendChild(opt);
+      }
+    }
+
+    function formatTime24(rawTime) {
+      if (!rawTime) return '18:00';
+      const parts = String(rawTime).trim().split(':');
+      const hh = String(Math.min(23, Math.max(0, parseInt(parts[0], 10) || 0))).padStart(2, '0');
+      const mm = String(Math.min(59, Math.max(0, parseInt(parts[1], 10) || 0))).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
+    function sortScheduleDays() {
+      state.schedule.sort((a, b) => {
+        const orderA = WEEKDAYS_META[a.dayIndex]?.order || 99;
+        const orderB = WEEKDAYS_META[b.dayIndex]?.order || 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return formatTime24(a.time).localeCompare(formatTime24(b.time));
+      });
+    }
+
+    function selectInitialWorkoutDay() {
+      sortScheduleDays();
+      if (state.schedule.length === 0) {
+        state.selectedScheduleId = null;
+        return;
+      }
+      const todayDow = new Date().getDay();
+      const todayMatch = state.schedule.find(d => Number(d.dayIndex) === todayDow);
+      if (todayMatch) {
+        state.selectedScheduleId = todayMatch.id;
+      } else if (!state.schedule.some(d => d.id === state.selectedScheduleId)) {
+        state.selectedScheduleId = state.schedule[0].id;
+      }
+    }
+
+    function getSelectedScheduleDay() {
+      if (state.schedule.length === 0) return null;
+      let found = state.schedule.find(d => d.id === state.selectedScheduleId);
+      if (!found) {
+        found = state.schedule[0];
+        state.selectedScheduleId = found.id;
+      }
+      return found;
+    }
+
     let revealObserver = null;
     function initMotionEngine() {
-      // IntersectionObserver for smooth viewport-triggered reveal animations
       revealObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
@@ -1038,7 +1221,7 @@
     function observeReveals(root) {
       const items = root.querySelectorAll('.reveal-item:not(.is-visible)');
       items.forEach((el, idx) => {
-        el.style.setProperty('--stagger-delay', `${Math.min(idx * 45, 280)}ms`);
+        el.style.setProperty('--stagger-delay', `${Math.min(idx * 40, 260)}ms`);
         if (revealObserver) {
           revealObserver.observe(el);
         } else {
@@ -1047,7 +1230,6 @@
       });
     }
 
-    /* Tactile 3D tilt micro-interaction on hover */
     function bindCard3DTilt(root) {
       if (!window.matchMedia('(hover: hover)').matches) return;
       root.querySelectorAll('.card-tilt').forEach((card) => {
@@ -1058,7 +1240,7 @@
           const rect = card.getBoundingClientRect();
           const x = (e.clientX - rect.left) / rect.width - 0.5;
           const y = (e.clientY - rect.top) / rect.height - 0.5;
-          card.style.transform = `perspective(900px) rotateX(${(-y * 4).toFixed(2)}deg) rotateY(${(x * 4).toFixed(2)}deg)`;
+          card.style.transform = `perspective(900px) rotateX(${(-y * 3.5).toFixed(2)}deg) rotateY(${(x * 3.5).toFixed(2)}deg)`;
         });
 
         card.addEventListener('pointerleave', () => {
@@ -1067,7 +1249,6 @@
       });
     }
 
-    /* Horizontal draggable snap carousel for Achievements */
     function initDraggableCarousel() {
       const slider = document.getElementById('achievements-carousel');
       if (!slider) return;
@@ -1098,7 +1279,6 @@
       });
     }
 
-    /* Animated Odometer Rolling Digit Counter */
     function animateCounter(el, targetValue, suffix = '', duration = 650) {
       if (!el) return;
       const startValue = parseFloat(el.dataset.numValue || '0') || 0;
@@ -1112,7 +1292,6 @@
       function step(now) {
         const elapsed = now - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        // Spring-like easeOutQuart
         const eased = 1 - Math.pow(1 - progress, 4);
         const current = Math.round(startValue + (targetValue - startValue) * eased);
         el.textContent = `${current}${suffix}`;
@@ -1139,15 +1318,30 @@
       try {
         const savedDraft = localStorage.getItem(STORAGE_KEYS.DRAFT);
         if (savedDraft) {
-          state.draft = JSON.parse(savedDraft);
-          document.getElementById('input-duration').value = state.draft.durationMinutes || 30;
-          document.getElementById('input-calories').value = state.draft.calories || 180;
-          document.getElementById('input-heartRate').value = state.draft.heartRate || 125;
+          const parsedDraft = JSON.parse(savedDraft);
+          state.draft.durationMinutes = parsedDraft.durationMinutes || 30;
+          state.draft.calories = parsedDraft.calories || 180;
+          state.draft.heartRate = parsedDraft.heartRate || 125;
+          if (parsedDraft.selectedScheduleId) {
+            state.selectedScheduleId = parsedDraft.selectedScheduleId;
+          }
+          document.getElementById('input-duration').value = state.draft.durationMinutes;
+          document.getElementById('input-calories').value = state.draft.calories;
+          document.getElementById('input-heartRate').value = state.draft.heartRate;
         }
 
         const savedSchedule = localStorage.getItem(STORAGE_KEYS.SCHEDULE);
         if (savedSchedule) {
-          state.schedule = JSON.parse(savedSchedule);
+          const parsedSched = JSON.parse(savedSchedule);
+          if (Array.isArray(parsedSched)) {
+            state.schedule = parsedSched.map(item => ({
+              id: item.id || ('day-' + Math.random().toString(36).slice(2, 8)),
+              dayIndex: Number(item.dayIndex),
+              time: formatTime24(item.time),
+              title: item.title || item.focus || '',
+              exercises: Array.isArray(item.exercises) ? item.exercises : []
+            }));
+          }
         }
 
         const savedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
@@ -1164,7 +1358,7 @@
         if (savedGh) {
           state.ghConfig = { ...state.ghConfig, ...JSON.parse(savedGh) };
           document.getElementById('gh-token').value = state.ghConfig.token || '';
-          document.getElementById('gh-owner').value = state.ghConfig.owner || 'y-lebid';
+          document.getElementById('gh-owner').value = state.ghConfig.owner || 'yehorl1';
           document.getElementById('gh-repo').value = state.ghConfig.repo || '';
           document.getElementById('gh-path').value = state.ghConfig.path || 'data/workouts.json';
         }
@@ -1174,10 +1368,14 @@
     }
 
     function persistDraft() {
-      localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(state.draft));
+      localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify({
+        ...state.draft,
+        selectedScheduleId: state.selectedScheduleId
+      }));
     }
 
     function persistSchedule() {
+      sortScheduleDays();
       localStorage.setItem(STORAGE_KEYS.SCHEDULE, JSON.stringify(state.schedule));
     }
 
@@ -1195,11 +1393,9 @@
     function switchTab(tabName, index) {
       state.activeTab = tabName;
 
-      // Update sliding indicator (4 tabs -> 100% * index)
       const indicator = document.getElementById('nav-indicator');
       indicator.style.transform = `translateX(${index * 100}%)`;
 
-      // Update nav button colors
       ['workout', 'schedule', 'progress', 'achievements'].forEach((name) => {
         const btn = document.getElementById(`nav-btn-${name}`);
         if (name === tabName) {
@@ -1211,7 +1407,6 @@
         }
       });
 
-      // Update panels
       document.querySelectorAll('.tab-panel').forEach((panel) => {
         panel.classList.remove('active');
       });
@@ -1220,7 +1415,6 @@
       observeReveals(targetPanel);
       bindCard3DTilt(targetPanel);
 
-      // Update header title
       const titles = {
         workout: 'Тренування',
         schedule: 'Розклад',
@@ -1229,7 +1423,11 @@
       };
       document.getElementById('header-title').textContent = titles[tabName];
 
-      if (tabName === 'progress') {
+      if (tabName === 'workout') {
+        renderWorkoutTab();
+      } else if (tabName === 'schedule') {
+        renderSchedule();
+      } else if (tabName === 'progress') {
         renderProgress();
       } else if (tabName === 'achievements') {
         renderAchievements();
@@ -1265,7 +1463,7 @@
     }
 
     /* ==========================================================================
-       TAB 1: APPLE WATCH SUMMARY & EXERCISES
+       TAB 1: WORKOUT (DAY SWITCHER + APPLE WATCH + PER-DAY EXERCISES + DELETE)
        ========================================================================== */
     function adjustMetric(field, delta) {
       const input = document.getElementById(`input-${field}`);
@@ -1291,24 +1489,102 @@
       persistDraft();
     }
 
-    function renderExercises() {
+    function selectWorkoutDay(dayId) {
+      state.selectedScheduleId = dayId;
+      persistDraft();
+      renderWorkoutTab();
+    }
+
+    function renderWorkoutTab() {
+      const pillsContainer = document.getElementById('workout-day-pills');
+      pillsContainer.innerHTML = '';
+
+      if (state.schedule.length === 0) {
+        pillsContainer.innerHTML = `
+          <button onclick="switchTab('schedule', 1)" class="pressable px-4 py-2 rounded-2xl bg-accentSoft text-accent text-xs font-semibold">
+            + Створити перший день у розкладі
+          </button>
+        `;
+        document.getElementById('workout-exercises-heading').textContent = 'Вправи на тренування';
+        document.getElementById('workout-completion-label').textContent = 'У розкладі ще немає днів';
+        document.getElementById('workout-progress-bar').style.width = '0%';
+        document.getElementById('exercises-list').innerHTML = `
+          <div class="card-surface p-6 text-center space-y-3">
+            <p class="text-sm font-semibold text-ink">Розклад тренувань порожній</p>
+            <p class="text-xs text-muted">Додай потрібні дні тижня та вправи у вкладці «Розклад».</p>
+            <button onclick="switchTab('schedule', 1)" class="pressable px-4 py-2.5 rounded-xl bg-accent text-white text-xs font-semibold">
+              Перейти до розкладу
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const activeDay = getSelectedScheduleDay();
+      const todayDow = new Date().getDay();
+
+      state.schedule.forEach((day) => {
+        const meta = WEEKDAYS_META[day.dayIndex] || { short: 'Дн', name: 'День' };
+        const isSelected = day.id === activeDay.id;
+        const isToday = Number(day.dayIndex) === todayDow;
+        const time24 = formatTime24(day.time);
+
+        const pill = document.createElement('button');
+        pill.onclick = () => selectWorkoutDay(day.id);
+        pill.className = `pressable shrink-0 px-3.5 py-2 rounded-2xl border text-left flex items-center gap-2 ${
+          isSelected
+            ? 'bg-ink text-white border-ink shadow-xs'
+            : 'bg-surface text-ink border-borderline hover:border-ink/30'
+        }`;
+        pill.innerHTML = `
+          <span class="text-xs font-bold">${meta.short}</span>
+          <span class="tabular text-[11px] font-medium ${isSelected ? 'text-white/80' : 'text-muted'}">${time24}</span>
+          ${isToday ? `<span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-success' : 'bg-accent'}"></span>` : ''}
+        `;
+        pillsContainer.appendChild(pill);
+      });
+
+      const dayMeta = WEEKDAYS_META[activeDay.dayIndex] || { name: 'Тренування' };
+      const headingTitle = activeDay.title
+        ? `${dayMeta.name}: ${activeDay.title}`
+        : `${dayMeta.name} (${formatTime24(activeDay.time)})`;
+      document.getElementById('workout-exercises-heading').textContent = headingTitle;
+
+      renderExercisesForActiveDay(activeDay);
+    }
+
+    function renderExercisesForActiveDay(activeDay) {
       const container = document.getElementById('exercises-list');
       container.innerHTML = '';
 
+      const exercises = activeDay.exercises || [];
       let completedCount = 0;
 
-      state.draft.exercises.forEach((ex, idx) => {
+      if (exercises.length === 0) {
+        container.innerHTML = `
+          <div class="card-surface p-6 text-center space-y-2">
+            <p class="text-sm font-semibold text-ink">На цей день ще немає вправ</p>
+            <p class="text-xs text-muted">Натисни «+ Додати вправу» зверху, щоб додати першу вправу.</p>
+          </div>
+        `;
+        document.getElementById('workout-completion-label').textContent = 'Виконано 0 з 0 вправ';
+        document.getElementById('workout-progress-bar').style.width = '0%';
+        return;
+      }
+
+      exercises.forEach((ex, idx) => {
         if (ex.completed) completedCount++;
 
         const card = document.createElement('div');
         card.className = `card-surface card-tilt reveal-item p-4 ${ex.completed ? 'border-success/60 bg-successSoft/25' : ''}`;
 
-        const hasWeights = ex.presets && ex.presets.length > 0 && !(ex.presets.length === 1 && ex.presets[0] === 0);
+        const presets = Array.isArray(ex.presets) && ex.presets.length > 0 ? ex.presets : [3.75, 5, 7.5];
+        const showPresets = !(presets.length === 1 && presets[0] === 0 && Number(ex.weight) === 0);
 
-        const weightPillsHtml = hasWeights ? `
+        const weightPillsHtml = showPresets ? `
           <div class="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-borderline/70">
             <span class="text-[11px] font-medium text-muted mr-1">Вага:</span>
-            ${ex.presets.map(w => {
+            ${presets.map(w => {
               const isSelected = Number(ex.weight) === Number(w);
               return `
                 <button onclick="selectExerciseWeight(${idx}, ${w})"
@@ -1332,7 +1608,7 @@
         ` : '';
 
         card.innerHTML = `
-          <div class="flex items-start gap-3.5">
+          <div class="flex items-start gap-3">
             <button onclick="toggleExerciseComplete(${idx})" aria-label="Позначити виконаним"
               class="check-circle pressable mt-0.5 w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 ${
                 ex.completed ? 'checked' : 'border-borderline bg-surface'
@@ -1344,15 +1620,24 @@
 
             <div class="flex-1 min-w-0">
               <div class="flex items-start justify-between gap-2">
-                <div>
+                <div class="min-w-0">
                   <h3 class="text-sm font-semibold leading-snug ${ex.completed ? 'line-through text-muted' : 'text-ink'}">
                     ${escapeHtml(ex.name)}
                   </h3>
-                  <p class="text-xs text-muted mt-0.5">${escapeHtml(ex.subtitle || '')}</p>
+                  ${ex.subtitle ? `<p class="text-xs text-muted mt-0.5">${escapeHtml(ex.subtitle)}</p>` : ''}
                 </div>
-                <span class="tabular shrink-0 px-2.5 py-1 rounded-lg bg-subtle text-xs font-semibold text-ink">
-                  ${ex.sets} × ${escapeHtml(String(ex.reps))}
-                </span>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="tabular px-2.5 py-1 rounded-lg bg-subtle text-xs font-semibold text-ink">
+                    ${ex.sets} × ${escapeHtml(String(ex.reps))}
+                  </span>
+                  <button onclick="deleteExerciseFromActiveDay(${idx})" aria-label="Видалити вправу" title="Видалити вправу"
+                    class="pressable w-7 h-7 rounded-lg bg-subtle hover:bg-dangerSoft text-muted hover:text-danger flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               ${weightPillsHtml}
             </div>
@@ -1365,30 +1650,55 @@
       observeReveals(container);
       bindCard3DTilt(container);
 
-      const total = state.draft.exercises.length;
+      const total = exercises.length;
       const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
       document.getElementById('workout-completion-label').textContent = `Виконано ${completedCount} з ${total} вправ`;
       document.getElementById('workout-progress-bar').style.width = `${pct}%`;
     }
 
     function toggleExerciseComplete(idx) {
-      state.draft.exercises[idx].completed = !state.draft.exercises[idx].completed;
-      persistDraft();
-      renderExercises();
+      const activeDay = getSelectedScheduleDay();
+      if (!activeDay) return;
+      activeDay.exercises[idx].completed = !activeDay.exercises[idx].completed;
+      persistSchedule();
+      renderExercisesForActiveDay(activeDay);
     }
 
     function selectExerciseWeight(idx, weight) {
-      state.draft.exercises[idx].weight = weight;
-      persistDraft();
-      renderExercises();
+      const activeDay = getSelectedScheduleDay();
+      if (!activeDay) return;
+      activeDay.exercises[idx].weight = weight;
+      persistSchedule();
+      renderExercisesForActiveDay(activeDay);
+    }
+
+    function deleteExerciseFromActiveDay(idx) {
+      const activeDay = getSelectedScheduleDay();
+      if (!activeDay) return;
+      activeDay.exercises.splice(idx, 1);
+      persistSchedule();
+      renderExercisesForActiveDay(activeDay);
+      renderSchedule();
+      showToast('Вправу видалено', 'info');
     }
 
     function openAddExerciseModal() {
+      const activeDay = getSelectedScheduleDay();
+      if (!activeDay) {
+        showToast('Спочатку додай день у розкладі', 'error');
+        switchTab('schedule', 1);
+        return;
+      }
+      const meta = WEEKDAYS_META[activeDay.dayIndex] || { name: 'Обраний день' };
+      document.getElementById('add-ex-day-hint').textContent = `Додається у програму: ${meta.name}`;
       document.getElementById('new-ex-name').value = '';
       document.getElementById('add-exercise-modal').classList.add('open');
     }
 
-    function addNewExercise() {
+    function addNewExerciseToActiveDay() {
+      const activeDay = getSelectedScheduleDay();
+      if (!activeDay) return;
+
       const name = document.getElementById('new-ex-name').value.trim();
       if (!name) {
         showToast('Введи назву вправи', 'error');
@@ -1398,52 +1708,55 @@
       const reps = document.getElementById('new-ex-reps').value.trim() || '12';
       const weight = parseFloat(document.getElementById('new-ex-weight').value) || 0;
 
-      state.draft.exercises.push({
-        id: 'ex-' + Date.now(),
-        name,
-        subtitle: 'Додаткова вправа',
-        sets,
-        reps,
-        weight,
-        presets: weight > 0 ? [3.75, 5, 7.5] : [0],
-        completed: false
-      });
-
-      persistDraft();
-      renderExercises();
+      activeDay.exercises.push(makeExercise(name, sets, reps, weight));
+      persistSchedule();
+      renderExercisesForActiveDay(activeDay);
+      renderSchedule();
       closeModal('add-exercise-modal');
-      showToast('Вправу додано');
+      showToast('Вправу додано до програми дня');
     }
 
     async function completeAndSaveWorkout() {
+      const activeDay = getSelectedScheduleDay();
       const duration = parseInt(document.getElementById('input-duration').value, 10) || 30;
       const calories = parseInt(document.getElementById('input-calories').value, 10) || 0;
       const heartRate = parseInt(document.getElementById('input-heartRate').value, 10) || 0;
 
+      const exercisesSnapshot = activeDay
+        ? activeDay.exercises.map(ex => ({
+            name: ex.name,
+            sets: ex.sets,
+            reps: ex.reps,
+            weight: ex.weight,
+            completed: ex.completed
+          }))
+        : [];
+
+      const dayMeta = activeDay ? WEEKDAYS_META[activeDay.dayIndex] : null;
+      const sessionTitle = activeDay
+        ? (activeDay.title ? `${dayMeta.name} · ${activeDay.title}` : dayMeta.name)
+        : 'Тренування';
+
       const record = {
         id: 'w-' + Date.now(),
         date: new Date().toISOString(),
+        sessionTitle,
         durationMinutes: duration,
         calories,
         heartRate,
-        exercises: state.draft.exercises.map(ex => ({
-          name: ex.name,
-          sets: ex.sets,
-          reps: ex.reps,
-          weight: ex.weight,
-          completed: ex.completed
-        }))
+        exercises: exercisesSnapshot
       };
 
       state.history.unshift(record);
       persistHistory();
 
-      // Reset completion states for the next session
-      state.draft.exercises.forEach(ex => ex.completed = false);
-      persistDraft();
-      renderExercises();
+      // Reset completion states for next session
+      if (activeDay) {
+        activeDay.exercises.forEach(ex => ex.completed = false);
+        persistSchedule();
+        renderExercisesForActiveDay(activeDay);
+      }
 
-      // Evaluate achievements & celebrate if newly unlocked
       const newlyUnlocked = evaluateAchievements(true);
       renderAchievements();
 
@@ -1453,10 +1766,335 @@
         showToast('Тренування збережено!');
       }
 
-      // Auto-push to GitHub if configured
       if (state.ghConfig.token && state.ghConfig.repo) {
         await pushToGitHub(true);
       }
+    }
+
+    /* ==========================================================================
+       TAB 2: DYNAMIC SCHEDULE (ONLY USER DAYS, 24H FORMAT, PER-DAY EXERCISES)
+       ========================================================================== */
+    function renderSchedule() {
+      sortScheduleDays();
+      const container = document.getElementById('schedule-list');
+      container.innerHTML = '';
+
+      const count = state.schedule.length;
+      document.getElementById('active-days-badge').textContent = `${count} ${count === 1 ? 'день' : count >= 2 && count <= 4 ? 'дні' : 'днів'} / тиж`;
+
+      if (count === 0) {
+        container.innerHTML = `
+          <div class="card-surface p-8 text-center space-y-2">
+            <p class="text-sm font-bold text-ink">У розкладі поки немає жодного дня</p>
+            <p class="text-xs text-muted">Натисни велику кнопку «+ Додати день» вище, щоб створити свій перший тренувальний день та додати до нього вправи.</p>
+          </div>
+        `;
+        return;
+      }
+
+      state.schedule.forEach((day) => {
+        const meta = WEEKDAYS_META[day.dayIndex] || { short: 'Дн', name: 'День' };
+        const time24 = formatTime24(day.time);
+        const exercises = day.exercises || [];
+
+        const exBadgesHtml = exercises.length > 0
+          ? `<div class="mt-3 pt-3 border-t border-borderline/70 space-y-1.5">
+              ${exercises.map(ex => `
+                <div class="flex items-center justify-between text-xs bg-subtle/80 px-3 py-1.5 rounded-xl">
+                  <span class="font-medium text-ink truncate pr-2">${escapeHtml(ex.name)}</span>
+                  <span class="tabular font-semibold text-muted shrink-0">
+                    ${ex.sets} × ${escapeHtml(String(ex.reps))}${Number(ex.weight) > 0 ? ` · ${ex.weight} кг` : ''}
+                  </span>
+                </div>
+              `).join('')}
+            </div>`
+          : `<p class="mt-2.5 text-xs text-muted italic">Вправи ще не додані — натисни редагувати, щоб додати.</p>`;
+
+        const card = document.createElement('div');
+        card.className = 'card-surface card-tilt reveal-item p-4 sm:p-5';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="w-11 h-11 rounded-2xl bg-accent text-white font-bold text-sm flex items-center justify-center shrink-0">
+                ${meta.short}
+              </span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-base font-bold text-ink">${meta.name}</h3>
+                  <span class="tabular px-2.5 py-0.5 rounded-lg bg-accentSoft text-accent text-xs font-bold">
+                    ${time24}
+                  </span>
+                </div>
+                <p class="text-xs text-muted mt-0.5 truncate">
+                  ${day.title ? escapeHtml(day.title) : `${exercises.length} вправ у програмі`}
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button onclick="openScheduleDayModal('${day.id}')" aria-label="Редагувати день" title="Редагувати день та вправи"
+                class="pressable px-3 py-2 rounded-xl bg-subtle hover:bg-accentSoft text-ink hover:text-accent text-xs font-semibold flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span class="hidden sm:inline">Змінити</span>
+              </button>
+
+              <button onclick="deleteScheduleDay('${day.id}')" aria-label="Видалити день" title="Видалити день"
+                class="pressable w-9 h-9 rounded-xl bg-subtle hover:bg-dangerSoft text-muted hover:text-danger flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          ${exBadgesHtml}
+        `;
+
+        container.appendChild(card);
+      });
+
+      observeReveals(container);
+      bindCard3DTilt(container);
+    }
+
+    function deleteScheduleDay(dayId) {
+      state.schedule = state.schedule.filter(d => d.id !== dayId);
+      if (state.selectedScheduleId === dayId) {
+        selectInitialWorkoutDay();
+      }
+      persistSchedule();
+      persistDraft();
+      renderSchedule();
+      renderWorkoutTab();
+      showToast('День видалено з розкладу', 'info');
+    }
+
+    function openScheduleDayModal(editingId = null) {
+      scheduleModalState.editingId = editingId;
+
+      if (editingId) {
+        const existing = state.schedule.find(d => d.id === editingId);
+        if (!existing) return;
+        document.getElementById('sched-modal-title').textContent = 'Редагувати день тренувань';
+        document.getElementById('sched-modal-day').value = String(existing.dayIndex);
+        const [hh, mm] = formatTime24(existing.time).split(':');
+        document.getElementById('sched-modal-hour').value = hh;
+        document.getElementById('sched-modal-minute').value = mm;
+        document.getElementById('sched-modal-title-input').value = existing.title || '';
+        scheduleModalState.exercises = JSON.parse(JSON.stringify(existing.exercises || []));
+      } else {
+        document.getElementById('sched-modal-title').textContent = 'Новий день тренувань';
+        // Pick first unused weekday if available
+        const usedDays = new Set(state.schedule.map(d => Number(d.dayIndex)));
+        const preferredOrder = [1, 3, 5, 2, 4, 6, 0];
+        const nextDay = preferredOrder.find(d => !usedDays.has(d)) ?? 1;
+        document.getElementById('sched-modal-day').value = String(nextDay);
+        document.getElementById('sched-modal-hour').value = '18';
+        document.getElementById('sched-modal-minute').value = '00';
+        document.getElementById('sched-modal-title-input').value = '';
+        scheduleModalState.exercises = [];
+      }
+
+      document.getElementById('sched-ex-name').value = '';
+      document.getElementById('sched-ex-sets').value = '3';
+      document.getElementById('sched-ex-reps').value = '12';
+      document.getElementById('sched-ex-weight').value = '5';
+
+      renderScheduleModalExercises();
+      document.getElementById('schedule-day-modal').classList.add('open');
+    }
+
+    function renderScheduleModalExercises() {
+      const list = document.getElementById('sched-modal-ex-list');
+      const countBadge = document.getElementById('sched-modal-ex-count');
+      const items = scheduleModalState.exercises;
+
+      countBadge.textContent = `${items.length} вправ`;
+      list.innerHTML = '';
+
+      if (items.length === 0) {
+        list.innerHTML = `<p class="text-xs text-muted text-center py-2">Поки не додано жодної вправи</p>`;
+        return;
+      }
+
+      items.forEach((ex, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between gap-2 bg-surface border border-borderline rounded-xl px-3 py-2';
+        row.innerHTML = `
+          <div class="min-w-0">
+            <p class="text-xs font-bold text-ink truncate">${escapeHtml(ex.name)}</p>
+            <p class="tabular text-[11px] text-muted">${ex.sets} підх. × ${escapeHtml(String(ex.reps))} повт.${Number(ex.weight) > 0 ? ` · ${ex.weight} кг` : ''}</p>
+          </div>
+          <button type="button" onclick="removeExerciseFromScheduleDraft(${idx})" aria-label="Видалити вправу"
+            class="pressable w-7 h-7 rounded-lg bg-subtle hover:bg-dangerSoft text-muted hover:text-danger flex items-center justify-center shrink-0">
+            ✕
+          </button>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    function addExerciseToScheduleDraft() {
+      const nameInput = document.getElementById('sched-ex-name');
+      const name = nameInput.value.trim();
+      if (!name) {
+        showToast('Введи назву вправи', 'error');
+        nameInput.focus();
+        return;
+      }
+      const sets = parseInt(document.getElementById('sched-ex-sets').value, 10) || 3;
+      const reps = document.getElementById('sched-ex-reps').value.trim() || '12';
+      const weight = parseFloat(document.getElementById('sched-ex-weight').value) || 0;
+
+      scheduleModalState.exercises.push(makeExercise(name, sets, reps, weight));
+      nameInput.value = '';
+      nameInput.focus();
+      renderScheduleModalExercises();
+    }
+
+    function removeExerciseFromScheduleDraft(idx) {
+      scheduleModalState.exercises.splice(idx, 1);
+      renderScheduleModalExercises();
+    }
+
+    function saveScheduleDayModal() {
+      const dayIndex = parseInt(document.getElementById('sched-modal-day').value, 10);
+      const hh = document.getElementById('sched-modal-hour').value || '18';
+      const mm = document.getElementById('sched-modal-minute').value || '00';
+      const time24 = formatTime24(`${hh}:${mm}`);
+      const title = document.getElementById('sched-modal-title-input').value.trim();
+
+      // If user typed an exercise name into the input but forgot to press "+ Додати вправу", include it automatically
+      const pendingExName = document.getElementById('sched-ex-name').value.trim();
+      if (pendingExName) {
+        const sets = parseInt(document.getElementById('sched-ex-sets').value, 10) || 3;
+        const reps = document.getElementById('sched-ex-reps').value.trim() || '12';
+        const weight = parseFloat(document.getElementById('sched-ex-weight').value) || 0;
+        scheduleModalState.exercises.push(makeExercise(pendingExName, sets, reps, weight));
+      }
+
+      if (scheduleModalState.editingId) {
+        const target = state.schedule.find(d => d.id === scheduleModalState.editingId);
+        if (target) {
+          target.dayIndex = dayIndex;
+          target.time = time24;
+          target.title = title;
+          target.exercises = scheduleModalState.exercises;
+        }
+        showToast('День у розкладі оновлено');
+      } else {
+        const newId = 'day-' + Date.now();
+        state.schedule.push({
+          id: newId,
+          dayIndex,
+          time: time24,
+          title,
+          exercises: scheduleModalState.exercises
+        });
+        state.selectedScheduleId = newId;
+        showToast('Новий день додано до розкладу');
+      }
+
+      persistSchedule();
+      persistDraft();
+      renderSchedule();
+      renderWorkoutTab();
+      closeModal('schedule-day-modal');
+    }
+
+    function downloadICS() {
+      const icsDayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+      if (state.schedule.length === 0) {
+        showToast('Додай хоча б один день у розклад', 'error');
+        return;
+      }
+
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const dtStamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}00Z`;
+
+      let events = '';
+      state.schedule.forEach((day) => {
+        const meta = WEEKDAYS_META[day.dayIndex] || { short: 'Дн', name: 'День' };
+        const [hh, mm] = formatTime24(day.time).split(':').map(Number);
+        const start = new Date();
+        const diff = (Number(day.dayIndex) + 7 - start.getDay()) % 7;
+        start.setDate(start.getDate() + diff);
+        start.setHours(hh || 18, mm || 0, 0, 0);
+
+        const end = new Date(start.getTime() + 45 * 60000);
+        const formatLocal = (d) =>
+          `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+
+        const exSummary = (day.exercises || [])
+          .map(e => `${e.name} (${e.sets}x${e.reps})`)
+          .join(', ') || 'Силове тренування з гантелями';
+
+        events += [
+          'BEGIN:VEVENT',
+          `UID:wt-${day.id}@workout-tracker`,
+          `DTSTAMP:${dtStamp}`,
+          `DTSTART:${formatLocal(start)}`,
+          `DTEND:${formatLocal(end)}`,
+          `RRULE:FREQ=WEEKLY;BYDAY=${icsDayMap[day.dayIndex]}`,
+          `SUMMARY:Тренування (${meta.short}${day.title ? ' — ' + day.title : ''})`,
+          `DESCRIPTION:${exSummary}`,
+          'BEGIN:VALARM',
+          'TRIGGER:-PT15M',
+          'ACTION:DISPLAY',
+          'DESCRIPTION:Час тренування через 15 хвилин',
+          'END:VALARM',
+          'END:VEVENT'
+        ].join('\r\n') + '\r\n';
+      });
+
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Workout Tracker PWA//UK',
+        'CALSCALE:GREGORIAN',
+        events.trim(),
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workout-schedule.ics';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Файл календаря .ics завантажено');
+    }
+
+    function openScheduleJsonModal() {
+      const payload = {
+        updatedAt: new Date().toISOString(),
+        schedule: state.schedule.map(d => ({
+          dayOfWeek: d.dayIndex,
+          dayName: WEEKDAYS_META[d.dayIndex]?.name || '',
+          time24: formatTime24(d.time),
+          title: d.title || '',
+          exercises: (d.exercises || []).map(e => ({
+            name: e.name,
+            sets: e.sets,
+            reps: e.reps,
+            weight: e.weight
+          }))
+        }))
+      };
+      document.getElementById('schedule-json-preview').value = JSON.stringify(payload, null, 2);
+      document.getElementById('json-modal').classList.add('open');
+    }
+
+    function copyScheduleJson() {
+      const textarea = document.getElementById('schedule-json-preview');
+      textarea.select();
+      document.execCommand('copy');
+      showToast('JSON скопійовано в буфер');
     }
 
     /* ==========================================================================
@@ -1540,7 +2178,6 @@
       document.getElementById('ach-hero-percent').textContent = `${overallPct}%`;
       document.getElementById('ach-hero-bar').style.width = `${overallPct}%`;
 
-      // 1. Render Horizontal Snap Carousel (featured milestones)
       const carousel = document.getElementById('achievements-carousel');
       if (carousel) {
         carousel.innerHTML = '';
@@ -1591,7 +2228,6 @@
         bindCard3DTilt(carousel);
       }
 
-      // 2. Render Full Achievements Grid
       const grid = document.getElementById('achievements-grid');
       if (!grid) return;
       grid.innerHTML = '';
@@ -1690,10 +2326,9 @@
         extraEl.classList.add('hidden');
       }
 
-      // Generate solid-color SVG/CSS confetti particles (zero gradients)
       const container = document.getElementById('confetti-container');
       container.innerHTML = '';
-      const palette = ['#0071E3', '#34C759', '#FF9500', '#FF3B30', '#7C3AED'];
+      const palette = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#7C3AED'];
       for (let i = 0; i < 28; i++) {
         const piece = document.createElement('span');
         piece.className = 'confetti-piece';
@@ -1713,168 +2348,6 @@
       }
 
       document.getElementById('celebration-modal').classList.add('open');
-    }
-
-    /* ==========================================================================
-       TAB 2: SCHEDULE & ICS EXPORT
-       ========================================================================== */
-    function renderSchedule() {
-      const container = document.getElementById('schedule-list');
-      container.innerHTML = '';
-
-      let activeCount = 0;
-
-      state.schedule.forEach((day, idx) => {
-        if (day.active) activeCount++;
-
-        const card = document.createElement('div');
-        card.className = `card-surface card-tilt reveal-item p-4 ${day.active ? 'border-accent/40' : ''}`;
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-              <span class="w-10 h-10 rounded-2xl font-bold text-sm flex items-center justify-center shrink-0 ${
-                day.active ? 'bg-accent text-white' : 'bg-subtle text-muted'
-              }">
-                ${day.short}
-              </span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <h3 class="text-sm font-bold text-ink">${day.name}</h3>
-                  <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold ${
-                    day.active ? 'bg-accentSoft text-accent' : 'bg-subtle text-muted'
-                  }">
-                    ${day.active ? 'Тренування' : 'Відпочинок'}
-                  </span>
-                </div>
-                <input type="text" value="${escapeHtml(day.focus)}"
-                  onchange="updateScheduleFocus(${idx}, this.value)"
-                  class="mt-1 w-full text-xs text-muted bg-transparent border-b border-transparent focus:border-accent focus:text-ink focus:outline-none" />
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 shrink-0">
-              <input type="time" value="${day.time}"
-                onchange="updateScheduleTime(${idx}, this.value)"
-                class="tabular px-2.5 py-1.5 rounded-xl bg-subtle border border-borderline text-xs font-semibold text-ink focus:outline-none focus:border-accent" />
-
-              <button onclick="toggleScheduleDay(${idx})" aria-label="Перемкнути день тренування"
-                class="pressable w-12 h-7 rounded-full p-0.5 transition-colors duration-200 ${
-                  day.active ? 'bg-success' : 'bg-borderline'
-                }">
-                <div class="w-6 h-6 rounded-full bg-white shadow-xs transition-transform duration-200 ${
-                  day.active ? 'translate-x-5' : 'translate-x-0'
-                }"></div>
-              </button>
-            </div>
-          </div>
-        `;
-
-        container.appendChild(card);
-      });
-
-      observeReveals(container);
-      bindCard3DTilt(container);
-      document.getElementById('active-days-badge').textContent = `${activeCount} дні / тиж`;
-    }
-
-    function toggleScheduleDay(idx) {
-      state.schedule[idx].active = !state.schedule[idx].active;
-      persistSchedule();
-      renderSchedule();
-    }
-
-    function updateScheduleTime(idx, val) {
-      state.schedule[idx].time = val || '18:30';
-      persistSchedule();
-    }
-
-    function updateScheduleFocus(idx, val) {
-      state.schedule[idx].focus = val.trim() || 'Тренування';
-      persistSchedule();
-    }
-
-    function downloadICS() {
-      const icsDayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
-      const activeDays = state.schedule.filter(d => d.active);
-
-      if (activeDays.length === 0) {
-        showToast('Увімкни хоча б один день тренувань', 'error');
-        return;
-      }
-
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      const dtStamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}00Z`;
-
-      let events = '';
-      activeDays.forEach((day) => {
-        const [hh, mm] = day.time.split(':').map(Number);
-        const start = new Date();
-        const diff = (day.dayIndex + 7 - start.getDay()) % 7;
-        start.setDate(start.getDate() + diff);
-        start.setHours(hh || 18, mm || 30, 0, 0);
-
-        const end = new Date(start.getTime() + 40 * 60000);
-        const formatLocal = (d) =>
-          `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
-
-        events += [
-          'BEGIN:VEVENT',
-          `UID:wt-${day.dayIndex}-${Date.now()}@workout-tracker`,
-          `DTSTAMP:${dtStamp}`,
-          `DTSTART:${formatLocal(start)}`,
-          `DTEND:${formatLocal(end)}`,
-          `RRULE:FREQ=WEEKLY;BYDAY=${icsDayMap[day.dayIndex]}`,
-          `SUMMARY:Силове тренування (${day.short})`,
-          `DESCRIPTION:${day.focus}`,
-          'BEGIN:VALARM',
-          'TRIGGER:-PT15M',
-          'ACTION:DISPLAY',
-          'DESCRIPTION:Час тренування через 15 хвилин',
-          'END:VALARM',
-          'END:VEVENT'
-        ].join('\r\n') + '\r\n';
-      });
-
-      const icsContent = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//Workout Tracker PWA//UK',
-        'CALSCALE:GREGORIAN',
-        events.trim(),
-        'END:VCALENDAR'
-      ].join('\r\n');
-
-      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'workout-schedule.ics';
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Файл календаря .ics завантажено');
-    }
-
-    function openScheduleJsonModal() {
-      const payload = {
-        updatedAt: new Date().toISOString(),
-        schedule: state.schedule.filter(d => d.active).map(d => ({
-          dayOfWeek: d.dayIndex,
-          dayName: d.name,
-          time: d.time,
-          focus: d.focus
-        }))
-      };
-      document.getElementById('schedule-json-preview').value = JSON.stringify(payload, null, 2);
-      document.getElementById('json-modal').classList.add('open');
-    }
-
-    function copyScheduleJson() {
-      const textarea = document.getElementById('schedule-json-preview');
-      textarea.select();
-      document.execCommand('copy');
-      showToast('JSON скопійовано в буфер');
     }
 
     /* ==========================================================================
@@ -1902,7 +2375,6 @@
         ? Math.round(hrEntries.reduce((acc, w) => acc + w.heartRate, 0) / hrEntries.length)
         : 0;
 
-      // Smooth monobank-style odometer digit interpolation
       animateCounter(document.getElementById('stat-total-workouts'), totalWorkouts, '');
       animateCounter(document.getElementById('stat-total-duration'), totalMinutes, ' хв');
       animateCounter(document.getElementById('stat-total-calories'), totalCalories, ' ккал');
@@ -1970,7 +2442,7 @@
         const dateLabel = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
 
         barsSvg += `
-          <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barH.toFixed(1)}" rx="7" fill="#0071E3" />
+          <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barH.toFixed(1)}" rx="7" fill="#007AFF" />
           <text x="${(x + barWidth / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" text-anchor="middle" fill="#1D1D1F" font-size="11" font-weight="600">${val}</text>
           <text x="${(x + barWidth / 2).toFixed(1)}" y="${height - 8}" text-anchor="middle" fill="#6E6E73" font-size="11">${dateLabel}</text>
         `;
@@ -2001,13 +2473,12 @@
 
       state.history.forEach((item, idx) => {
         const d = new Date(item.date);
-        const dateStr = d.toLocaleDateString('uk-UA', {
+        const datePart = d.toLocaleDateString('uk-UA', {
           day: 'numeric',
           month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+          year: 'numeric'
         });
+        const timePart = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
         const exercisesHtml = (item.exercises || []).map(ex => `
           <div class="flex items-center justify-between py-1.5 text-xs border-b border-borderline/60 last:border-none">
@@ -2024,16 +2495,17 @@
         card.className = 'card-surface card-tilt reveal-item p-4';
         card.innerHTML = `
           <div class="flex items-center justify-between gap-2">
-            <button onclick="toggleHistoryDetails(${idx})" class="flex-1 text-left">
-              <p class="text-sm font-bold text-ink capitalize">${dateStr}</p>
-              <div class="flex flex-wrap items-center gap-2 mt-1.5">
+            <button onclick="toggleHistoryDetails(${idx})" class="flex-1 text-left min-w-0">
+              <p class="text-sm font-bold text-ink truncate">${escapeHtml(item.sessionTitle || datePart)}</p>
+              <p class="tabular text-[11px] text-muted mt-0.5 capitalize">${datePart}, ${timePart}</p>
+              <div class="flex flex-wrap items-center gap-2 mt-2">
                 <span class="tabular px-2.5 py-0.5 rounded-lg bg-accentSoft text-accent text-xs font-semibold">${item.durationMinutes} хв</span>
                 <span class="tabular px-2.5 py-0.5 rounded-lg bg-warningSoft text-warning text-xs font-semibold">${item.calories} ккал</span>
                 <span class="tabular px-2.5 py-0.5 rounded-lg bg-dangerSoft text-danger text-xs font-semibold">${item.heartRate} уд/хв</span>
               </div>
             </button>
 
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 shrink-0">
               <button onclick="toggleHistoryDetails(${idx})" aria-label="Деталі" class="pressable w-8 h-8 rounded-xl bg-subtle flex items-center justify-center text-muted">
                 <svg id="hist-chevron-${idx}" class="w-4 h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -2106,7 +2578,9 @@
           if (Array.isArray(parsed.schedule)) {
             state.schedule = parsed.schedule;
             persistSchedule();
+            selectInitialWorkoutDay();
             renderSchedule();
+            renderWorkoutTab();
           }
           if (parsed.unlockedAchievements && typeof parsed.unlockedAchievements === 'object') {
             state.unlockedAchievements = parsed.unlockedAchievements;
@@ -2124,7 +2598,7 @@
     }
 
     /* ==========================================================================
-       GITHUB REST API SYNC (PRIVATE REPO JSON)
+       GITHUB REST API SYNC
        ========================================================================== */
     function openSyncModal() {
       document.getElementById('gh-feedback').classList.add('hidden');
@@ -2155,7 +2629,7 @@
     async function saveGitHubConfigAndSync() {
       state.ghConfig = {
         token: document.getElementById('gh-token').value.trim(),
-        owner: document.getElementById('gh-owner').value.trim() || 'y-lebid',
+        owner: document.getElementById('gh-owner').value.trim() || 'yehorl1',
         repo: document.getElementById('gh-repo').value.trim(),
         path: document.getElementById('gh-path').value.trim() || 'data/workouts.json'
       };
@@ -2163,7 +2637,6 @@
       localStorage.setItem(STORAGE_KEYS.GH_CONFIG, JSON.stringify(state.ghConfig));
       updateSyncStatusBadge();
 
-      // Check if cloud_backup achievement unlocked
       const newly = evaluateAchievements(true);
       renderAchievements();
 
@@ -2193,7 +2666,6 @@
       try {
         if (!silent) setGhFeedback('Синхронізація з GitHub...', false);
 
-        // 1. Check if file already exists to retrieve its SHA
         let sha = null;
         const getRes = await fetch(apiUrl, { headers });
         if (getRes.ok) {
@@ -2203,7 +2675,6 @@
           throw new Error(`Помилка доступу (${getRes.status}). Перевір токен та назву репо.`);
         }
 
-        // 2. Encode UTF-8 JSON safely to Base64
         const payload = {
           updatedAt: new Date().toISOString(),
           schedule: state.schedule,
@@ -2230,7 +2701,7 @@
           throw new Error(errData.message || `Помилка запису (${putRes.status})`);
         }
 
-        if (!silent) setGhFeedback('Успішно синхронізовано з приватним репозиторієм GitHub!');
+        if (!silent) setGhFeedback('Успішно синхронізовано з репозиторієм GitHub!');
         showToast('Синхронізовано з GitHub');
       } catch (err) {
         if (!silent) setGhFeedback(err.message, true);
@@ -2240,7 +2711,7 @@
 
     async function pullFromGitHub() {
       const token = document.getElementById('gh-token').value.trim();
-      const owner = document.getElementById('gh-owner').value.trim() || 'y-lebid';
+      const owner = document.getElementById('gh-owner').value.trim() || 'yehorl1';
       const repo = document.getElementById('gh-repo').value.trim();
       const path = document.getElementById('gh-path').value.trim() || 'data/workouts.json';
 
@@ -2275,7 +2746,9 @@
         if (Array.isArray(parsed.schedule)) {
           state.schedule = parsed.schedule;
           persistSchedule();
+          selectInitialWorkoutDay();
           renderSchedule();
+          renderWorkoutTab();
         }
         if (parsed.unlockedAchievements && typeof parsed.unlockedAchievements === 'object') {
           state.unlockedAchievements = parsed.unlockedAchievements;
