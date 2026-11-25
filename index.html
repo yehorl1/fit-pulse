@@ -1,0 +1,2303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Тренування" />
+  <meta name="theme-color" content="#F5F5F7" />
+  <title>Тренування — Персональний трекер</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            canvas: '#F5F5F7',
+            surface: '#FFFFFF',
+            subtle: '#F2F2F7',
+            borderline: '#E5E5EA',
+            ink: '#1D1D1F',
+            muted: '#6E6E73',
+            accent: '#007AFF',
+            accentHover: '#0062CC',
+            accentSoft: '#EBF3FE',
+            success: '#34C759',
+            successSoft: '#EAF9EE',
+            danger: '#FF3B30',
+            dangerSoft: '#FFECEB',
+            warning: '#FF9500',
+            warningSoft: '#FFF5E5',
+            purple: '#7C3AED',
+            purpleSoft: '#F3E8FF',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --spring: cubic-bezier(0.22, 1, 0.36, 1);
+      --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --fast: 220ms cubic-bezier(0.22, 1, 0.36, 1);
+      --medium: 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #F5F5F7;
+      color: #1D1D1F;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .tabular {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Floating glassmorphic top & bottom bars (solid RGBA, zero gradients) */
+    .glass-bar {
+      background-color: rgba(245, 245, 247, 0.84);
+      backdrop-filter: saturate(180%) blur(16px);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+    }
+
+    .glass-nav {
+      background-color: rgba(255, 255, 255, 0.92);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+
+    /* Clean flat elevation shadow + 3D tilt readiness */
+    .card-surface {
+      background-color: #FFFFFF;
+      border: 1px solid #E5E5EA;
+      border-radius: 22px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+      transition: transform 280ms var(--spring), border-color 220ms ease, box-shadow 280ms var(--spring), background-color 220ms ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    @media (hover: hover) {
+      .card-tilt:hover {
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.06);
+        border-color: #D1D1D6;
+      }
+    }
+
+    /* Viewport-triggered reveal animation (monobank scroll smoothness) */
+    .reveal-item {
+      opacity: 0;
+      transform: translateY(18px) scale(0.96);
+      transition: opacity 520ms var(--spring), transform 560ms var(--spring);
+      transition-delay: var(--stagger-delay, 0ms);
+    }
+    .reveal-item.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Tactile spring press */
+    .pressable {
+      transition: transform 180ms var(--spring), background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .pressable:active {
+      transform: scale(0.97);
+    }
+
+    /* Tab panels transition */
+    .tab-panel {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px) scale(0.985);
+    }
+    .tab-panel.active {
+      display: block;
+      animation: panelEnter var(--medium) forwards;
+    }
+    @keyframes panelEnter {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.985);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Horizontal draggable / snap card carousel (monobank card deck feel) */
+    .snap-carousel {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      padding: 6px 4px 14px 4px;
+      margin: 0 -4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      cursor: grab;
+    }
+    .snap-carousel::-webkit-scrollbar {
+      display: none;
+    }
+    .snap-carousel.dragging {
+      cursor: grabbing;
+      scroll-snap-type: none;
+      scroll-behavior: auto;
+    }
+    .snap-card {
+      scroll-snap-align: center;
+      flex: 0 0 82%;
+      max-width: 310px;
+      transition: transform 360ms var(--spring), opacity 360ms var(--spring), border-color 260ms ease;
+    }
+    @media (min-width: 540px) {
+      .snap-card {
+        flex: 0 0 270px;
+      }
+    }
+
+    /* Sliding bottom navigation indicator */
+    .nav-indicator {
+      transition: transform var(--medium);
+      will-change: transform;
+    }
+
+    /* Spring checkmark animation */
+    .check-circle {
+      transition: background-color 260ms var(--spring), border-color 260ms var(--spring), transform 280ms var(--bounce);
+    }
+    .check-circle.checked {
+      background-color: #34C759;
+      border-color: #34C759;
+      transform: scale(1.06);
+    }
+    .check-icon {
+      stroke-dasharray: 24;
+      stroke-dashoffset: 24;
+      transition: stroke-dashoffset 280ms var(--spring) 40ms;
+    }
+    .check-circle.checked .check-icon {
+      stroke-dashoffset: 0;
+    }
+
+    /* Modal Sheet Animation */
+    .modal-backdrop {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 280ms var(--spring);
+      background-color: rgba(29, 29, 31, 0.34);
+    }
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-sheet {
+      transform: translateY(28px) scale(0.96);
+      opacity: 0;
+      transition: transform 380ms var(--spring), opacity 280ms var(--spring);
+    }
+    .modal-backdrop.open .modal-sheet {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* Celebration Badge Bounce & Confetti Burst */
+    @keyframes badgeSpringPop {
+      0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+      60% { transform: scale(1.08) rotate(2deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .badge-pop {
+      animation: badgeSpringPop 620ms var(--bounce) forwards;
+    }
+
+    @keyframes confettiFly {
+      0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(0.4) rotate(var(--rot));
+        opacity: 0;
+      }
+    }
+    .confetti-piece {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      pointer-events: none;
+      animation: confettiFly 950ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Expandable details accordion */
+    .accordion-content {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 320ms var(--spring);
+    }
+    .accordion-content.expanded {
+      grid-template-rows: 1fr;
+    }
+    .accordion-inner {
+      overflow: hidden;
+    }
+
+    /* Toast notification */
+    .toast-pill {
+      transform: translate(-50%, -28px) scale(0.95);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 340ms var(--spring), opacity 240ms ease;
+    }
+    .toast-pill.show {
+      transform: translate(-50%, 0) scale(1);
+      opacity: 1;
+    }
+
+    /* Remove number input arrows */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+
+    /* Safe area spacing for iOS PWA */
+    .pb-safe {
+      padding-bottom: calc(92px + env(safe-area-inset-bottom, 16px));
+    }
+    .nav-safe {
+      padding-bottom: env(safe-area-inset-bottom, 8px);
+    }
+  </style>
+</head>
+<body class="bg-canvas text-ink min-h-screen">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast-pill fixed top-4 left-1/2 z-50 flex items-center gap-2.5 bg-surface border border-borderline px-4 py-2.5 rounded-full shadow-lg max-w-[92vw]">
+    <span id="toast-dot" class="w-2.5 h-2.5 rounded-full bg-success shrink-0"></span>
+    <span id="toast-text" class="text-sm font-medium text-ink truncate">Збережено</span>
+  </div>
+
+  <!-- Sticky Floating Glassmorphic Header -->
+  <header class="glass-bar sticky top-0 z-30 border-b border-borderline/80">
+    <div class="max-w-[680px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+      <div class="min-w-0">
+        <h1 id="header-title" class="text-[20px] font-bold tracking-tight text-ink leading-tight truncate">Тренування</h1>
+        <p id="header-date" class="text-xs font-medium text-muted mt-0.5 capitalize truncate">Середа, 25 листопада</p>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- Compact Achievement Progress Pill -->
+        <button onclick="switchTab('achievements', 3)" aria-label="Відкрити ачівки"
+          class="pressable flex items-center gap-1.5 px-3 py-2 rounded-full bg-warningSoft border border-warning/25 text-xs font-bold text-ink">
+          <svg class="w-3.5 h-3.5 text-warning shrink-0" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/>
+          </svg>
+          <span id="header-ach-count" class="tabular">0/10</span>
+        </button>
+
+        <!-- GitHub Sync Pill -->
+        <button id="sync-status-btn" onclick="openSyncModal()" class="pressable flex items-center gap-1.5 px-3 py-2 rounded-full bg-surface border border-borderline text-xs font-semibold text-ink">
+          <span id="sync-status-dot" class="w-2 h-2 rounded-full bg-warning"></span>
+          <span id="sync-status-label" class="hidden sm:inline">Локально</span>
+          <svg class="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-[680px] mx-auto px-4 sm:px-6 pt-5 pb-safe">
+
+    <!-- ==================== TAB 1: ТРЕНУВАННЯ (APPLE WATCH SUMMARY + EXERCISES) ==================== -->
+    <section id="tab-workout" class="tab-panel active space-y-4">
+
+      <!-- Apple Watch Summary Metrics Card (No Stopwatch) -->
+      <div class="card-surface card-tilt reveal-item p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2.5">
+            <span class="w-8 h-8 rounded-xl bg-ink text-white flex items-center justify-center">
+              <!-- Apple Watch minimal icon -->
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="5" width="12" height="14" rx="3" />
+                <path stroke-linecap="round" d="M9 2h6M9 22h6" />
+              </svg>
+            </span>
+            <div>
+              <h2 class="text-sm font-bold text-ink leading-tight">Підсумки з Apple Watch</h2>
+              <p class="text-[11px] text-muted">Перенеси показники після завершення сесії</p>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full bg-subtle text-[11px] font-semibold text-muted">Watch Sync</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2.5">
+          <!-- Duration (min) -->
+          <div class="bg-subtle rounded-2xl p-3 border border-borderline/70 flex flex-col items-center">
+            <span class="text-[11px] font-semibold text-muted mb-1.5">Час (хв)</span>
+            <input id="input-duration" type="number" min="1" max="300" value="30" oninput="syncWorkoutDraft()"
+              class="tabular w-full text-center text-2xl font-bold text-ink bg-transparent focus:outline-none mb-2" />
+            <div class="flex items-center gap-1.5 w-full">
+              <button onclick="adjustMetric('duration', -5)" class="pressable flex-1 h-8 rounded-xl bg-surface border border-borderline text-ink font-semibold text-sm flex items-center justify-center">−5</button>
+              <button onclick="adjustMetric('duration', 5)" class="pressable flex-1 h-8 rounded-xl bg-surface border border-borderline text-ink font-semibold text-sm flex items-center justify-center">+5</button>
+            </div>
+          </div>
+
+          <!-- Active Calories -->
+          <div class="bg-subtle rounded-2xl p-3 border border-borderline/70 flex flex-col items-center">
+            <span class="text-[11px] font-semibold text-warning mb-1.5">Калорії</span>
+            <input id="input-calories" type="number" min="0" max="3000" value="180" oninput="syncWorkoutDraft()"
+              class="tabular w-full text-center text-2xl font-bold text-ink bg-transparent focus:outline-none mb-2" />
+            <div class="flex items-center gap-1.5 w-full">
+              <button onclick="adjustMetric('calories', -10)" class="pressable flex-1 h-8 rounded-xl bg-surface border border-borderline text-ink font-semibold text-sm flex items-center justify-center">−10</button>
+              <button onclick="adjustMetric('calories', 10)" class="pressable flex-1 h-8 rounded-xl bg-surface border border-borderline text-ink font-semibold text-sm flex items-center justify-center">+10</button>
+            </div>
+          </div>
+
+          <!-- Avg Heart Rate -->
+          <div class="bg-subtle rounded-2xl p-3 border border-borderline/70 flex flex-col items-center">
+            <span class="text-[11px] font-semibold text-danger mb-1.5">Пульс</span>
+            <input id="input-heartRate" type="number" min="40" max="220" value="125" oninput="syncWorkoutDraft()"
+              class="tabular w-full text-center text-2xl font-bold text-ink bg-transparent focus:outline-none mb-2" />
+            <div class="flex items-center gap-1.5 w-full">
+              <button onclick="adjustMetric('heartRate', -2)" class="pressable flex-1 h-8 rounded-xl bg-surface border border-borderline text-ink font-semibold text-sm flex items-center justify-center">−2</button>
+              <button onclick="adjustMetric('heartRate', 2)" class="pressable flex-1 h-8 rounded-xl bg-surface border border-borderline text-ink font-semibold text-sm flex items-center justify-center">+2</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Bar Header for Exercises -->
+      <div class="pt-2 flex items-center justify-between reveal-item">
+        <div>
+          <h2 class="text-base font-bold text-ink">Вправи з гантелями</h2>
+          <p id="workout-completion-label" class="text-xs text-muted mt-0.5">Виконано 0 з 6 вправ</p>
+        </div>
+        <button onclick="openAddExerciseModal()" class="pressable px-3.5 py-2 rounded-xl bg-accentSoft text-accent text-xs font-semibold flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Додати вправу
+        </button>
+      </div>
+
+      <!-- Linear Progress Indicator -->
+      <div class="w-full h-2 bg-borderline rounded-full overflow-hidden reveal-item">
+        <div id="workout-progress-bar" class="h-full bg-success rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <!-- Exercises List Container -->
+      <div id="exercises-list" class="space-y-3"></div>
+
+      <!-- Complete & Save Button -->
+      <div class="pt-2 reveal-item">
+        <button onclick="completeAndSaveWorkout()" class="pressable w-full py-4 rounded-2xl bg-accent text-white font-semibold text-base shadow-sm flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Завершити та зберегти тренування
+        </button>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: РОЗКЛАД (WEEKLY SCHEDULE) ==================== -->
+    <section id="tab-schedule" class="tab-panel space-y-4">
+
+      <div class="card-surface card-tilt reveal-item p-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-base font-bold text-ink">Тижневий графік</h2>
+            <p class="text-xs text-muted mt-1 leading-relaxed">Налаштуй дні тренувань та час. Цей розклад використовується для експорту в календар і нагадувань у Telegram через GitHub Actions.</p>
+          </div>
+          <span id="active-days-badge" class="tabular shrink-0 px-3 py-1 rounded-full bg-accentSoft text-accent text-xs font-semibold">3 дні / тиж</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-4">
+          <button onclick="downloadICS()" class="pressable py-2.5 px-4 rounded-xl bg-accent text-white text-xs font-semibold flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Експортувати розклад (.ics)
+          </button>
+          <button onclick="openScheduleJsonModal()" class="pressable py-2.5 px-4 rounded-xl bg-subtle border border-borderline text-ink text-xs font-semibold flex items-center justify-center gap-2">
+            <svg class="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            JSON для GitHub Actions
+          </button>
+        </div>
+      </div>
+
+      <!-- 7-Day Planner List -->
+      <div id="schedule-list" class="space-y-3"></div>
+    </section>
+
+    <!-- ==================== TAB 3: ПРОГРЕС (LIVE ODOMETER STATS & HISTORY) ==================== -->
+    <section id="tab-progress" class="tab-panel space-y-4">
+
+      <!-- 4 Summary Metric Cards with Odometer Rolling Counters -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="card-surface card-tilt reveal-item p-4">
+          <p class="text-xs font-medium text-muted">Всього тренувань</p>
+          <p id="stat-total-workouts" class="tabular text-2xl font-bold text-ink mt-1">0</p>
+        </div>
+        <div class="card-surface card-tilt reveal-item p-4">
+          <p class="text-xs font-medium text-muted">Загальний час</p>
+          <p id="stat-total-duration" class="tabular text-2xl font-bold text-ink mt-1">0 хв</p>
+        </div>
+        <div class="card-surface card-tilt reveal-item p-4">
+          <p class="text-xs font-medium text-muted">Середній пульс</p>
+          <p id="stat-avg-hr" class="tabular text-2xl font-bold text-ink mt-1">—</p>
+        </div>
+        <div class="card-surface card-tilt reveal-item p-4">
+          <p class="text-xs font-medium text-muted">Активні калорії</p>
+          <p id="stat-total-calories" class="tabular text-2xl font-bold text-ink mt-1">0 ккал</p>
+        </div>
+      </div>
+
+      <!-- Chart Card -->
+      <div class="card-surface card-tilt reveal-item p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-ink">Динаміка показників</h2>
+            <p id="chart-subtitle" class="text-xs text-muted mt-0.5">Останні сесії тренувань</p>
+          </div>
+          <!-- Apple-style Segmented Control -->
+          <div class="inline-flex p-1 rounded-xl bg-subtle border border-borderline self-start">
+            <button onclick="setChartMetric('duration')" id="seg-duration" class="pressable px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface text-ink shadow-xs">Час</button>
+            <button onclick="setChartMetric('calories')" id="seg-calories" class="pressable px-3 py-1.5 rounded-lg text-xs font-semibold text-muted">Калорії</button>
+            <button onclick="setChartMetric('heartRate')" id="seg-heartRate" class="pressable px-3 py-1.5 rounded-lg text-xs font-semibold text-muted">Пульс</button>
+          </div>
+        </div>
+
+        <div id="chart-container" class="w-full h-48 flex items-center justify-center">
+          <!-- SVG Chart injected via JS -->
+        </div>
+      </div>
+
+      <!-- History Header & Backup Actions -->
+      <div class="flex items-center justify-between pt-1 reveal-item">
+        <h2 class="text-base font-bold text-ink">Історія тренувань</h2>
+        <div class="flex items-center gap-2">
+          <button onclick="exportBackupJSON()" class="pressable px-3 py-1.5 rounded-xl bg-surface border border-borderline text-xs font-semibold text-ink">Експорт JSON</button>
+          <label class="pressable px-3 py-1.5 rounded-xl bg-surface border border-borderline text-xs font-semibold text-accent cursor-pointer">
+            Імпорт
+            <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <!-- History List -->
+      <div id="history-list" class="space-y-3"></div>
+    </section>
+
+    <!-- ==================== TAB 4: АЧІВКИ (ACHIEVEMENTS SYSTEM) ==================== -->
+    <section id="tab-achievements" class="tab-panel space-y-5">
+
+      <!-- Achievements Hero Overview Card -->
+      <div class="card-surface card-tilt reveal-item p-5">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warningSoft text-warning text-[11px] font-bold mb-2">
+              Колекція нагород
+            </span>
+            <h2 class="text-xl font-bold text-ink tracking-tight">Твої досягнення</h2>
+            <p class="text-xs text-muted mt-1">Відкривай бейджі за регулярність, робочу вагу гантелей та показники Apple Watch.</p>
+          </div>
+          <div class="shrink-0 w-16 h-16 rounded-2xl bg-subtle border border-borderline flex flex-col items-center justify-center">
+            <span id="ach-hero-ratio" class="tabular text-lg font-bold text-ink leading-none">0/10</span>
+            <span class="text-[10px] font-semibold text-muted mt-1">відкрито</span>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-xs font-semibold mb-1.5">
+            <span class="text-muted">Загальний прогрес</span>
+            <span id="ach-hero-percent" class="tabular text-ink">0%</span>
+          </div>
+          <div class="w-full h-2.5 bg-subtle rounded-full overflow-hidden border border-borderline/60">
+            <div id="ach-hero-bar" class="h-full bg-warning rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monobank-style Horizontal Draggable Snap Carousel of Featured/Next Milestones -->
+      <div class="reveal-item">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold text-ink">Найближчі цілі та нагороди</h3>
+          <span class="text-[11px] text-muted">Гортай картки →</span>
+        </div>
+        <div id="achievements-carousel" class="snap-carousel"></div>
+      </div>
+
+      <!-- Full Achievements Grid -->
+      <div class="reveal-item">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-bold text-ink">Усі нагороди</h3>
+          <div class="inline-flex p-1 rounded-xl bg-subtle border border-borderline">
+            <button onclick="setAchFilter('all')" id="ach-filter-all" class="pressable px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-surface text-ink shadow-xs">Усі</button>
+            <button onclick="setAchFilter('unlocked')" id="ach-filter-unlocked" class="pressable px-2.5 py-1 rounded-lg text-[11px] font-semibold text-muted">Відкриті</button>
+            <button onclick="setAchFilter('locked')" id="ach-filter-locked" class="pressable px-2.5 py-1 rounded-lg text-[11px] font-semibold text-muted">У процесі</button>
+          </div>
+        </div>
+        <div id="achievements-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Navigation Bar (4 Tabs) -->
+  <nav class="glass-nav fixed bottom-0 left-0 right-0 z-30 border-t border-borderline nav-safe">
+    <div class="max-w-[680px] mx-auto px-2 sm:px-4 relative">
+      <!-- Sliding Top Indicator (1/4 width) -->
+      <div class="w-full h-[3px] relative overflow-hidden">
+        <div id="nav-indicator" class="nav-indicator w-1/4 h-full flex justify-center">
+          <div class="w-10 h-full bg-accent rounded-b-full"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-4 h-16">
+        <button onclick="switchTab('workout', 0)" id="nav-btn-workout" class="pressable flex flex-col items-center justify-center gap-1 text-accent">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span class="text-[11px] font-semibold">Тренування</span>
+        </button>
+
+        <button onclick="switchTab('schedule', 1)" id="nav-btn-schedule" class="pressable flex flex-col items-center justify-center gap-1 text-muted">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span class="text-[11px] font-semibold">Розклад</span>
+        </button>
+
+        <button onclick="switchTab('progress', 2)" id="nav-btn-progress" class="pressable flex flex-col items-center justify-center gap-1 text-muted">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span class="text-[11px] font-semibold">Прогрес</span>
+        </button>
+
+        <button onclick="switchTab('achievements', 3)" id="nav-btn-achievements" class="pressable flex flex-col items-center justify-center gap-1 text-muted relative">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
+          <span class="text-[11px] font-semibold">Ачівки</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ==================== MODAL 1: GITHUB SYNC CONFIGURATION ==================== -->
+  <div id="sync-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'sync-modal')">
+    <div class="modal-sheet bg-surface border border-borderline w-full max-w-[480px] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-ink">Синхронізація з GitHub</h3>
+          <p class="text-xs text-muted mt-0.5">Зберігай прогрес, ачівки і розклад у свій приватний репозиторій</p>
+        </div>
+        <button onclick="closeModal('sync-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-ink mb-1">GitHub Personal Access Token (PAT)</label>
+          <input id="gh-token" type="password" placeholder="github_pat_..." class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          <p class="text-[11px] text-muted mt-1">Токен зберігається виключно локально в пам'яті твого браузера.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Власник (Owner)</label>
+            <input id="gh-owner" type="text" value="y-lebid" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Репозиторій (Repo)</label>
+            <input id="gh-repo" type="text" placeholder="workout-tracker" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-ink mb-1">Шлях до файлу даних</label>
+          <input id="gh-path" type="text" value="data/workouts.json" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+        </div>
+      </div>
+
+      <div id="gh-feedback" class="hidden text-xs font-medium px-3.5 py-2.5 rounded-xl"></div>
+
+      <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
+        <button onclick="saveGitHubConfigAndSync()" id="gh-sync-now-btn" class="pressable flex-1 py-3 rounded-xl bg-accent text-white text-sm font-semibold">
+          Зберегти та синхронізувати
+        </button>
+        <button onclick="pullFromGitHub()" class="pressable py-3 px-4 rounded-xl bg-subtle border border-borderline text-ink text-sm font-semibold">
+          Завантажити з GitHub
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: ADD CUSTOM EXERCISE ==================== -->
+  <div id="add-exercise-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'add-exercise-modal')">
+    <div class="modal-sheet bg-surface border border-borderline w-full max-w-[440px] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-ink">Нова вправа</h3>
+        <button onclick="closeModal('add-exercise-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-ink mb-1">Назва вправи</label>
+          <input id="new-ex-name" type="text" placeholder="Наприклад: Підйом гантелей на біцепс" class="w-full px-3.5 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+        </div>
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Підходи</label>
+            <input id="new-ex-sets" type="number" value="3" min="1" max="10" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Повторення</label>
+            <input id="new-ex-reps" type="text" value="12" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-ink mb-1">Вага (кг)</label>
+            <input id="new-ex-weight" type="number" step="0.25" value="5" class="tabular w-full px-3 py-2.5 rounded-xl bg-subtle border border-borderline text-sm text-ink focus:outline-none focus:border-accent" />
+          </div>
+        </div>
+      </div>
+
+      <button onclick="addNewExercise()" class="pressable w-full py-3 rounded-xl bg-accent text-white text-sm font-semibold">
+        Додати до тренування
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: SCHEDULE JSON PREVIEW ==================== -->
+  <div id="json-modal" class="modal-backdrop fixed inset-0 z-40 flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="closeModalOnBackdrop(event, 'json-modal')">
+    <div class="modal-sheet bg-surface border border-borderline w-full max-w-[480px] rounded-t-3xl sm:rounded-3xl p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-ink">JSON розкладу для бота</h3>
+          <p class="text-xs text-muted mt-0.5">Автоматично зберігається в <code>data/workouts.json</code> при синхронізації</p>
+        </div>
+        <button onclick="closeModal('json-modal')" class="pressable w-8 h-8 rounded-full bg-subtle flex items-center justify-center text-muted">✕</button>
+      </div>
+
+      <textarea id="schedule-json-preview" readonly rows="10" class="w-full p-3.5 rounded-xl bg-subtle border border-borderline text-xs font-mono text-ink focus:outline-none"></textarea>
+
+      <button onclick="copyScheduleJson()" class="pressable w-full py-3 rounded-xl bg-accent text-white text-sm font-semibold">
+        Скопіювати JSON
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 4: CELEBRATION ACHIEVEMENT UNLOCK ==================== -->
+  <div id="celebration-modal" class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4" onclick="closeModalOnBackdrop(event, 'celebration-modal')">
+    <div id="celebration-card" class="modal-sheet relative overflow-hidden bg-surface border border-borderline w-full max-w-[380px] rounded-3xl p-6 text-center shadow-2xl">
+      <!-- Confetti particles container -->
+      <div id="confetti-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+      <div class="relative z-10">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warningSoft text-warning text-xs font-bold mb-4">
+          Нове досягнення!
+        </span>
+
+        <div id="celebration-badge-wrap" class="badge-pop mx-auto w-20 h-20 rounded-3xl bg-accentSoft text-accent flex items-center justify-center mb-4">
+          <!-- Emblem injected via JS -->
+        </div>
+
+        <h3 id="celebration-title" class="text-xl font-bold text-ink tracking-tight">Перший крок</h3>
+        <p id="celebration-desc" class="text-xs text-muted mt-1.5 leading-relaxed">Завершено перше домашнє тренування</p>
+
+        <div id="celebration-extra-count" class="hidden mt-3 text-xs font-semibold text-accent"></div>
+
+        <button onclick="closeModal('celebration-modal')" class="pressable mt-6 w-full py-3.5 rounded-2xl bg-ink text-white text-sm font-semibold">
+          Супер, продовжуємо!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       STATE & DEFAULT DATA
+       ========================================================================== */
+    const STORAGE_KEYS = {
+      DRAFT: 'wt_active_draft_v2',
+      HISTORY: 'wt_history_v1',
+      SCHEDULE: 'wt_schedule_v1',
+      GH_CONFIG: 'wt_gh_config_v1',
+      ACHIEVEMENTS: 'wt_achievements_v1'
+    };
+
+    const DEFAULT_EXERCISES = [
+      {
+        id: 'ex-1',
+        name: 'Розминка та суглобова гімнастика',
+        subtitle: '5 хв · Власна вага',
+        sets: 1,
+        reps: '5 хв',
+        weight: 0,
+        presets: [0],
+        completed: false
+      },
+      {
+        id: 'ex-2',
+        name: 'Жим гантелей стоячи над головою',
+        subtitle: 'Плечі та трицепс',
+        sets: 3,
+        reps: '10–12',
+        weight: 5,
+        presets: [3.75, 5, 7.5],
+        completed: false
+      },
+      {
+        id: 'ex-3',
+        name: 'Згинання рук «Молотки»',
+        subtitle: 'Біцепс та передпліччя',
+        sets: 3,
+        reps: '12',
+        weight: 7.5,
+        presets: [3.75, 5, 7.5],
+        completed: false
+      },
+      {
+        id: 'ex-4',
+        name: 'Махи гантелями в сторони',
+        subtitle: 'Середня дельта',
+        sets: 3,
+        reps: '12–15',
+        weight: 3.75,
+        presets: [3.75, 5, 7.5],
+        completed: false
+      },
+      {
+        id: 'ex-5',
+        name: 'Згинання зап’ясть з гантелями',
+        subtitle: 'Передпліччя та хват',
+        sets: 3,
+        reps: '15',
+        weight: 5,
+        presets: [3.75, 5, 7.5],
+        completed: false
+      },
+      {
+        id: 'ex-6',
+        name: 'Розтяжка після тренування',
+        subtitle: '5 хв · Відновлення',
+        sets: 1,
+        reps: '5 хв',
+        weight: 0,
+        presets: [0],
+        completed: false
+      }
+    ];
+
+    const DEFAULT_SCHEDULE = [
+      { dayIndex: 1, short: 'Пн', name: 'Понеділок', active: true, time: '18:30', focus: 'Силове з гантелями (верх тіла, 30 хв)' },
+      { dayIndex: 2, short: 'Вт', name: 'Вівторок', active: false, time: '19:00', focus: 'Відновлення / легка ходьба 30 хв' },
+      { dayIndex: 3, short: 'Ср', name: 'Середа', active: true, time: '18:30', focus: 'Силове з гантелями (плечі та руки, 30 хв)' },
+      { dayIndex: 4, short: 'Чт', name: 'Четвер', active: false, time: '19:00', focus: 'Відновлення / мобільність суглобів' },
+      { dayIndex: 5, short: 'Пт', name: 'П’ятниця', active: true, time: '18:00', focus: 'Силове з гантелями (базовий комплекс, 35 хв)' },
+      { dayIndex: 6, short: 'Сб', name: 'Субота', active: false, time: '11:00', focus: 'Активний відпочинок на свіжому повітрі' },
+      { dayIndex: 0, short: 'Нд', name: 'Неділя', active: false, time: '12:00', focus: 'Повний відпочинок' }
+    ];
+
+    /* 10 Tailored Achievements for Home Dumbbell Workouts & Apple Watch Metrics */
+    const ACHIEVEMENT_DEFS = [
+      {
+        id: 'first_step',
+        title: 'Перший крок',
+        desc: 'Заверши своє перше тренування та збережи результат.',
+        color: 'accent',
+        target: 1,
+        unit: 'трен.',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />',
+        evaluate: (ctx) => Math.min(ctx.history.length, 1)
+      },
+      {
+        id: 'full_set',
+        title: 'Повний сет',
+        desc: 'Виконай усі заплановані вправи за одне тренування на 100%.',
+        color: 'success',
+        target: 1,
+        unit: 'сесія',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />',
+        evaluate: (ctx) => {
+          const hasFull = ctx.history.some(w => w.exercises && w.exercises.length >= 4 && w.exercises.every(e => e.completed));
+          return hasFull ? 1 : 0;
+        }
+      },
+      {
+        id: 'steel_rhythm',
+        title: 'Сталевий ритм',
+        desc: 'Проведи 3 тренування протягом одного календарного тижня.',
+        color: 'purple',
+        target: 3,
+        unit: 'трен./тиж',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />',
+        evaluate: (ctx) => {
+          const countsByWeek = {};
+          ctx.history.forEach(w => {
+            const d = new Date(w.date);
+            const day = d.getDay() || 7;
+            d.setDate(d.getDate() + 4 - day);
+            const yearStart = new Date(d.getFullYear(), 0, 1);
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            const key = `${d.getFullYear()}-W${weekNo}`;
+            countsByWeek[key] = (countsByWeek[key] || 0) + 1;
+          });
+          const maxWeek = Object.values(countsByWeek).reduce((m, v) => Math.max(m, v), 0);
+          return Math.min(maxWeek, 3);
+        }
+      },
+      {
+        id: 'titan_shoulders',
+        title: 'Плечі титана',
+        desc: 'Виконай жим гантелей над головою з робочою вагою 7.5 кг.',
+        color: 'warning',
+        target: 7.5,
+        unit: 'кг',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />',
+        evaluate: (ctx) => {
+          let maxW = 0;
+          ctx.history.forEach(w => {
+            (w.exercises || []).forEach(e => {
+              if (e.completed && e.name.toLowerCase().includes('жим')) {
+                maxW = Math.max(maxW, Number(e.weight) || 0);
+              }
+            });
+          });
+          return Math.min(maxW, 7.5);
+        }
+      },
+      {
+        id: 'thor_hammer',
+        title: 'Молот Тора',
+        desc: 'Виконай згинання «Молотки» з гантелями 7.5 кг.',
+        color: 'accent',
+        target: 7.5,
+        unit: 'кг',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />',
+        evaluate: (ctx) => {
+          let maxW = 0;
+          ctx.history.forEach(w => {
+            (w.exercises || []).forEach(e => {
+              if (e.completed && e.name.toLowerCase().includes('молотки')) {
+                maxW = Math.max(maxW, Number(e.weight) || 0);
+              }
+            });
+          });
+          return Math.min(maxW, 7.5);
+        }
+      },
+      {
+        id: 'fire_session',
+        title: 'Вогняна сесія',
+        desc: 'Спали 250+ активних ккал за одне тренування за даними Apple Watch.',
+        color: 'warning',
+        target: 250,
+        unit: 'ккал',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />',
+        evaluate: (ctx) => {
+          const maxCal = ctx.history.reduce((m, w) => Math.max(m, Number(w.calories) || 0), 0);
+          return Math.min(maxCal, 250);
+        }
+      },
+      {
+        id: 'cardio_drive',
+        title: 'Кардіо-драйв',
+        desc: 'Тримай середній пульс 135+ уд/хв під час силового тренування.',
+        color: 'danger',
+        target: 135,
+        unit: 'уд/хв',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />',
+        evaluate: (ctx) => {
+          const maxHr = ctx.history.reduce((m, w) => Math.max(m, Number(w.heartRate) || 0), 0);
+          return Math.min(maxHr, 135);
+        }
+      },
+      {
+        id: 'iron_ten',
+        title: 'Залізна десятка',
+        desc: 'Накопич 10 завершених тренувань в історії прогресу.',
+        color: 'success',
+        target: 10,
+        unit: 'трен.',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />',
+        evaluate: (ctx) => Math.min(ctx.history.length, 10)
+      },
+      {
+        id: 'iron_marathon',
+        title: 'Марафонець заліза',
+        desc: 'Сумарно 300+ хвилин тренувань, зафіксованих з Apple Watch.',
+        color: 'purple',
+        target: 300,
+        unit: 'хв',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />',
+        evaluate: (ctx) => {
+          const sumMins = ctx.history.reduce((s, w) => s + (Number(w.durationMinutes) || 0), 0);
+          return Math.min(sumMins, 300);
+        }
+      },
+      {
+        id: 'cloud_backup',
+        title: 'Хмарний бекап',
+        desc: 'Підключи синхронізацію прогресу у приватний репозиторій GitHub.',
+        color: 'accent',
+        target: 1,
+        unit: 'підкл.',
+        icon: '<path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />',
+        evaluate: (ctx) => (ctx.ghConfig && ctx.ghConfig.token && ctx.ghConfig.repo ? 1 : 0)
+      }
+    ];
+
+    let state = {
+      activeTab: 'workout',
+      chartMetric: 'duration',
+      achFilter: 'all',
+      draft: {
+        durationMinutes: 30,
+        calories: 180,
+        heartRate: 125,
+        exercises: JSON.parse(JSON.stringify(DEFAULT_EXERCISES))
+      },
+      schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)),
+      history: [],
+      unlockedAchievements: {}, // { [id]: ISOString }
+      ghConfig: {
+        token: '',
+        owner: 'y-lebid',
+        repo: '',
+        path: 'data/workouts.json'
+      }
+    };
+
+    /* ==========================================================================
+       INITIALIZATION & MOTION ENGINE
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      updateHeaderDate();
+      loadStateFromStorage();
+      renderExercises();
+      renderSchedule();
+      evaluateAchievements(false);
+      renderAchievements();
+      renderProgress();
+      updateSyncStatusBadge();
+      initMotionEngine();
+    });
+
+    let revealObserver = null;
+    function initMotionEngine() {
+      // IntersectionObserver for smooth viewport-triggered reveal animations
+      revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.08, rootMargin: '0px 0px -16px 0px' });
+
+      observeReveals(document);
+      initDraggableCarousel();
+      bindCard3DTilt(document);
+    }
+
+    function observeReveals(root) {
+      const items = root.querySelectorAll('.reveal-item:not(.is-visible)');
+      items.forEach((el, idx) => {
+        el.style.setProperty('--stagger-delay', `${Math.min(idx * 45, 280)}ms`);
+        if (revealObserver) {
+          revealObserver.observe(el);
+        } else {
+          el.classList.add('is-visible');
+        }
+      });
+    }
+
+    /* Tactile 3D tilt micro-interaction on hover */
+    function bindCard3DTilt(root) {
+      if (!window.matchMedia('(hover: hover)').matches) return;
+      root.querySelectorAll('.card-tilt').forEach((card) => {
+        if (card.dataset.tiltBound) return;
+        card.dataset.tiltBound = '1';
+
+        card.addEventListener('pointermove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          card.style.transform = `perspective(900px) rotateX(${(-y * 4).toFixed(2)}deg) rotateY(${(x * 4).toFixed(2)}deg)`;
+        });
+
+        card.addEventListener('pointerleave', () => {
+          card.style.transform = '';
+        });
+      });
+    }
+
+    /* Horizontal draggable snap carousel for Achievements */
+    function initDraggableCarousel() {
+      const slider = document.getElementById('achievements-carousel');
+      if (!slider) return;
+      let isDown = false;
+      let startX = 0;
+      let scrollLeft = 0;
+
+      slider.addEventListener('mousedown', (e) => {
+        isDown = true;
+        slider.classList.add('dragging');
+        startX = e.pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+      });
+      slider.addEventListener('mouseleave', () => {
+        isDown = false;
+        slider.classList.remove('dragging');
+      });
+      slider.addEventListener('mouseup', () => {
+        isDown = false;
+        slider.classList.remove('dragging');
+      });
+      slider.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - slider.offsetLeft;
+        const walk = (x - startX) * 1.4;
+        slider.scrollLeft = scrollLeft - walk;
+      });
+    }
+
+    /* Animated Odometer Rolling Digit Counter */
+    function animateCounter(el, targetValue, suffix = '', duration = 650) {
+      if (!el) return;
+      const startValue = parseFloat(el.dataset.numValue || '0') || 0;
+      el.dataset.numValue = String(targetValue);
+      if (startValue === targetValue) {
+        el.textContent = `${targetValue}${suffix}`;
+        return;
+      }
+
+      const startTime = performance.now();
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Spring-like easeOutQuart
+        const eased = 1 - Math.pow(1 - progress, 4);
+        const current = Math.round(startValue + (targetValue - startValue) * eased);
+        el.textContent = `${current}${suffix}`;
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          el.textContent = `${targetValue}${suffix}`;
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    function updateHeaderDate() {
+      const now = new Date();
+      const formatted = now.toLocaleDateString('uk-UA', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+      document.getElementById('header-date').textContent = formatted;
+    }
+
+    function loadStateFromStorage() {
+      try {
+        const savedDraft = localStorage.getItem(STORAGE_KEYS.DRAFT);
+        if (savedDraft) {
+          state.draft = JSON.parse(savedDraft);
+          document.getElementById('input-duration').value = state.draft.durationMinutes || 30;
+          document.getElementById('input-calories').value = state.draft.calories || 180;
+          document.getElementById('input-heartRate').value = state.draft.heartRate || 125;
+        }
+
+        const savedSchedule = localStorage.getItem(STORAGE_KEYS.SCHEDULE);
+        if (savedSchedule) {
+          state.schedule = JSON.parse(savedSchedule);
+        }
+
+        const savedHistory = localStorage.getItem(STORAGE_KEYS.HISTORY);
+        if (savedHistory) {
+          state.history = JSON.parse(savedHistory);
+        }
+
+        const savedAchievements = localStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
+        if (savedAchievements) {
+          state.unlockedAchievements = JSON.parse(savedAchievements);
+        }
+
+        const savedGh = localStorage.getItem(STORAGE_KEYS.GH_CONFIG);
+        if (savedGh) {
+          state.ghConfig = { ...state.ghConfig, ...JSON.parse(savedGh) };
+          document.getElementById('gh-token').value = state.ghConfig.token || '';
+          document.getElementById('gh-owner').value = state.ghConfig.owner || 'y-lebid';
+          document.getElementById('gh-repo').value = state.ghConfig.repo || '';
+          document.getElementById('gh-path').value = state.ghConfig.path || 'data/workouts.json';
+        }
+      } catch (e) {
+        console.error('Помилка читання localStorage:', e);
+      }
+    }
+
+    function persistDraft() {
+      localStorage.setItem(STORAGE_KEYS.DRAFT, JSON.stringify(state.draft));
+    }
+
+    function persistSchedule() {
+      localStorage.setItem(STORAGE_KEYS.SCHEDULE, JSON.stringify(state.schedule));
+    }
+
+    function persistHistory() {
+      localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
+    }
+
+    function persistAchievements() {
+      localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(state.unlockedAchievements));
+    }
+
+    /* ==========================================================================
+       NAVIGATION & UI HELPERS
+       ========================================================================== */
+    function switchTab(tabName, index) {
+      state.activeTab = tabName;
+
+      // Update sliding indicator (4 tabs -> 100% * index)
+      const indicator = document.getElementById('nav-indicator');
+      indicator.style.transform = `translateX(${index * 100}%)`;
+
+      // Update nav button colors
+      ['workout', 'schedule', 'progress', 'achievements'].forEach((name) => {
+        const btn = document.getElementById(`nav-btn-${name}`);
+        if (name === tabName) {
+          btn.classList.remove('text-muted');
+          btn.classList.add('text-accent');
+        } else {
+          btn.classList.remove('text-accent');
+          btn.classList.add('text-muted');
+        }
+      });
+
+      // Update panels
+      document.querySelectorAll('.tab-panel').forEach((panel) => {
+        panel.classList.remove('active');
+      });
+      const targetPanel = document.getElementById(`tab-${tabName}`);
+      targetPanel.classList.add('active');
+      observeReveals(targetPanel);
+      bindCard3DTilt(targetPanel);
+
+      // Update header title
+      const titles = {
+        workout: 'Тренування',
+        schedule: 'Розклад',
+        progress: 'Прогрес',
+        achievements: 'Ачівки'
+      };
+      document.getElementById('header-title').textContent = titles[tabName];
+
+      if (tabName === 'progress') {
+        renderProgress();
+      } else if (tabName === 'achievements') {
+        renderAchievements();
+      }
+    }
+
+    let toastTimeout = null;
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const dot = document.getElementById('toast-dot');
+      const text = document.getElementById('toast-text');
+
+      text.textContent = message;
+      dot.className = 'w-2.5 h-2.5 rounded-full shrink-0 ' + (
+        type === 'error' ? 'bg-danger' : type === 'info' ? 'bg-accent' : 'bg-success'
+      );
+
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2800);
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function closeModalOnBackdrop(event, id) {
+      if (event.target.id === id) {
+        closeModal(id);
+      }
+    }
+
+    /* ==========================================================================
+       TAB 1: APPLE WATCH SUMMARY & EXERCISES
+       ========================================================================== */
+    function adjustMetric(field, delta) {
+      const input = document.getElementById(`input-${field}`);
+      const current = parseInt(input.value, 10) || 0;
+      const limits = {
+        duration: [1, 300],
+        calories: [0, 3000],
+        heartRate: [40, 220]
+      };
+      const [minVal, maxVal] = limits[field];
+      const next = Math.max(minVal, Math.min(maxVal, current + delta));
+      input.value = next;
+
+      if (field === 'duration') state.draft.durationMinutes = next;
+      else state.draft[field] = next;
+      persistDraft();
+    }
+
+    function syncWorkoutDraft() {
+      state.draft.durationMinutes = parseInt(document.getElementById('input-duration').value, 10) || 30;
+      state.draft.calories = parseInt(document.getElementById('input-calories').value, 10) || 0;
+      state.draft.heartRate = parseInt(document.getElementById('input-heartRate').value, 10) || 0;
+      persistDraft();
+    }
+
+    function renderExercises() {
+      const container = document.getElementById('exercises-list');
+      container.innerHTML = '';
+
+      let completedCount = 0;
+
+      state.draft.exercises.forEach((ex, idx) => {
+        if (ex.completed) completedCount++;
+
+        const card = document.createElement('div');
+        card.className = `card-surface card-tilt reveal-item p-4 ${ex.completed ? 'border-success/60 bg-successSoft/25' : ''}`;
+
+        const hasWeights = ex.presets && ex.presets.length > 0 && !(ex.presets.length === 1 && ex.presets[0] === 0);
+
+        const weightPillsHtml = hasWeights ? `
+          <div class="flex flex-wrap items-center gap-1.5 mt-3 pt-3 border-t border-borderline/70">
+            <span class="text-[11px] font-medium text-muted mr-1">Вага:</span>
+            ${ex.presets.map(w => {
+              const isSelected = Number(ex.weight) === Number(w);
+              return `
+                <button onclick="selectExerciseWeight(${idx}, ${w})"
+                  class="pressable tabular px-2.5 py-1 rounded-lg text-xs font-semibold border ${
+                    isSelected
+                      ? 'bg-accent text-white border-accent'
+                      : 'bg-subtle text-ink border-borderline hover:border-accent/50'
+                  }">
+                  ${w} кг
+                </button>
+              `;
+            }).join('')}
+            <div class="flex items-center gap-1 ml-auto">
+              <input type="number" step="0.25" min="0" max="200" value="${ex.weight}"
+                onchange="selectExerciseWeight(${idx}, parseFloat(this.value) || 0)"
+                aria-label="Своя вага"
+                class="tabular w-14 text-center py-1 rounded-lg bg-subtle border border-borderline text-xs font-semibold text-ink focus:outline-none focus:border-accent" />
+              <span class="text-[11px] text-muted">кг</span>
+            </div>
+          </div>
+        ` : '';
+
+        card.innerHTML = `
+          <div class="flex items-start gap-3.5">
+            <button onclick="toggleExerciseComplete(${idx})" aria-label="Позначити виконаним"
+              class="check-circle pressable mt-0.5 w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                ex.completed ? 'checked' : 'border-borderline bg-surface'
+              }">
+              <svg class="check-icon w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <h3 class="text-sm font-semibold leading-snug ${ex.completed ? 'line-through text-muted' : 'text-ink'}">
+                    ${escapeHtml(ex.name)}
+                  </h3>
+                  <p class="text-xs text-muted mt-0.5">${escapeHtml(ex.subtitle || '')}</p>
+                </div>
+                <span class="tabular shrink-0 px-2.5 py-1 rounded-lg bg-subtle text-xs font-semibold text-ink">
+                  ${ex.sets} × ${escapeHtml(String(ex.reps))}
+                </span>
+              </div>
+              ${weightPillsHtml}
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      observeReveals(container);
+      bindCard3DTilt(container);
+
+      const total = state.draft.exercises.length;
+      const pct = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+      document.getElementById('workout-completion-label').textContent = `Виконано ${completedCount} з ${total} вправ`;
+      document.getElementById('workout-progress-bar').style.width = `${pct}%`;
+    }
+
+    function toggleExerciseComplete(idx) {
+      state.draft.exercises[idx].completed = !state.draft.exercises[idx].completed;
+      persistDraft();
+      renderExercises();
+    }
+
+    function selectExerciseWeight(idx, weight) {
+      state.draft.exercises[idx].weight = weight;
+      persistDraft();
+      renderExercises();
+    }
+
+    function openAddExerciseModal() {
+      document.getElementById('new-ex-name').value = '';
+      document.getElementById('add-exercise-modal').classList.add('open');
+    }
+
+    function addNewExercise() {
+      const name = document.getElementById('new-ex-name').value.trim();
+      if (!name) {
+        showToast('Введи назву вправи', 'error');
+        return;
+      }
+      const sets = parseInt(document.getElementById('new-ex-sets').value, 10) || 3;
+      const reps = document.getElementById('new-ex-reps').value.trim() || '12';
+      const weight = parseFloat(document.getElementById('new-ex-weight').value) || 0;
+
+      state.draft.exercises.push({
+        id: 'ex-' + Date.now(),
+        name,
+        subtitle: 'Додаткова вправа',
+        sets,
+        reps,
+        weight,
+        presets: weight > 0 ? [3.75, 5, 7.5] : [0],
+        completed: false
+      });
+
+      persistDraft();
+      renderExercises();
+      closeModal('add-exercise-modal');
+      showToast('Вправу додано');
+    }
+
+    async function completeAndSaveWorkout() {
+      const duration = parseInt(document.getElementById('input-duration').value, 10) || 30;
+      const calories = parseInt(document.getElementById('input-calories').value, 10) || 0;
+      const heartRate = parseInt(document.getElementById('input-heartRate').value, 10) || 0;
+
+      const record = {
+        id: 'w-' + Date.now(),
+        date: new Date().toISOString(),
+        durationMinutes: duration,
+        calories,
+        heartRate,
+        exercises: state.draft.exercises.map(ex => ({
+          name: ex.name,
+          sets: ex.sets,
+          reps: ex.reps,
+          weight: ex.weight,
+          completed: ex.completed
+        }))
+      };
+
+      state.history.unshift(record);
+      persistHistory();
+
+      // Reset completion states for the next session
+      state.draft.exercises.forEach(ex => ex.completed = false);
+      persistDraft();
+      renderExercises();
+
+      // Evaluate achievements & celebrate if newly unlocked
+      const newlyUnlocked = evaluateAchievements(true);
+      renderAchievements();
+
+      if (newlyUnlocked.length > 0) {
+        triggerCelebration(newlyUnlocked);
+      } else {
+        showToast('Тренування збережено!');
+      }
+
+      // Auto-push to GitHub if configured
+      if (state.ghConfig.token && state.ghConfig.repo) {
+        await pushToGitHub(true);
+      }
+    }
+
+    /* ==========================================================================
+       ACHIEVEMENTS ENGINE & CELEBRATION BURST
+       ========================================================================== */
+    function evaluateAchievements(allowNotify = false) {
+      const ctx = {
+        history: state.history,
+        schedule: state.schedule,
+        ghConfig: state.ghConfig
+      };
+
+      const newlyUnlocked = [];
+      let changed = false;
+
+      ACHIEVEMENT_DEFS.forEach((def) => {
+        const currentVal = def.evaluate(ctx);
+        const isDone = currentVal >= def.target;
+        if (isDone && !state.unlockedAchievements[def.id]) {
+          state.unlockedAchievements[def.id] = new Date().toISOString();
+          newlyUnlocked.push(def);
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        persistAchievements();
+      }
+
+      const unlockedCount = Object.keys(state.unlockedAchievements).length;
+      document.getElementById('header-ach-count').textContent = `${unlockedCount}/${ACHIEVEMENT_DEFS.length}`;
+
+      return allowNotify ? newlyUnlocked : [];
+    }
+
+    function setAchFilter(filter) {
+      state.achFilter = filter;
+      ['all', 'unlocked', 'locked'].forEach((f) => {
+        const btn = document.getElementById(`ach-filter-${f}`);
+        if (f === filter) {
+          btn.className = 'pressable px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-surface text-ink shadow-xs';
+        } else {
+          btn.className = 'pressable px-2.5 py-1 rounded-lg text-[11px] font-semibold text-muted';
+        }
+      });
+      renderAchievements();
+    }
+
+    function getBadgeColorClasses(color, unlocked) {
+      if (!unlocked) {
+        return {
+          bg: 'bg-subtle',
+          text: 'text-muted',
+          bar: 'bg-borderline',
+          border: 'border-borderline'
+        };
+      }
+      const map = {
+        accent: { bg: 'bg-accentSoft', text: 'text-accent', bar: 'bg-accent', border: 'border-accent/30' },
+        success: { bg: 'bg-successSoft', text: 'text-success', bar: 'bg-success', border: 'border-success/35' },
+        warning: { bg: 'bg-warningSoft', text: 'text-warning', bar: 'bg-warning', border: 'border-warning/35' },
+        danger: { bg: 'bg-dangerSoft', text: 'text-danger', bar: 'bg-danger', border: 'border-danger/30' },
+        purple: { bg: 'bg-purpleSoft', text: 'text-purple', bar: 'bg-purple', border: 'border-purple/30' }
+      };
+      return map[color] || map.accent;
+    }
+
+    function renderAchievements() {
+      const ctx = {
+        history: state.history,
+        schedule: state.schedule,
+        ghConfig: state.ghConfig
+      };
+
+      const unlockedCount = Object.keys(state.unlockedAchievements).length;
+      const totalCount = ACHIEVEMENT_DEFS.length;
+      const overallPct = Math.round((unlockedCount / totalCount) * 100);
+
+      document.getElementById('header-ach-count').textContent = `${unlockedCount}/${totalCount}`;
+      document.getElementById('ach-hero-ratio').textContent = `${unlockedCount}/${totalCount}`;
+      document.getElementById('ach-hero-percent').textContent = `${overallPct}%`;
+      document.getElementById('ach-hero-bar').style.width = `${overallPct}%`;
+
+      // 1. Render Horizontal Snap Carousel (featured milestones)
+      const carousel = document.getElementById('achievements-carousel');
+      if (carousel) {
+        carousel.innerHTML = '';
+        const sortedForCarousel = [...ACHIEVEMENT_DEFS].sort((a, b) => {
+          const aDone = !!state.unlockedAchievements[a.id];
+          const bDone = !!state.unlockedAchievements[b.id];
+          if (aDone !== bDone) return aDone ? 1 : -1;
+          return (b.evaluate(ctx) / b.target) - (a.evaluate(ctx) / a.target);
+        }).slice(0, 5);
+
+        sortedForCarousel.forEach((def) => {
+          const unlockedAt = state.unlockedAchievements[def.id];
+          const isUnlocked = !!unlockedAt;
+          const progressVal = def.evaluate(ctx);
+          const pct = Math.min(100, Math.round((progressVal / def.target) * 100));
+          const colors = getBadgeColorClasses(def.color, isUnlocked);
+
+          const slide = document.createElement('div');
+          slide.className = `snap-card card-surface card-tilt p-4 flex flex-col justify-between ${isUnlocked ? colors.border : ''}`;
+          slide.innerHTML = `
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="w-11 h-11 rounded-2xl ${colors.bg} ${colors.text} flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+                    ${def.icon}
+                  </svg>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${isUnlocked ? 'bg-successSoft text-success' : 'bg-subtle text-muted'}">
+                  ${isUnlocked ? 'Відкрито ✓' : `${pct}%`}
+                </span>
+              </div>
+              <h4 class="text-sm font-bold text-ink">${escapeHtml(def.title)}</h4>
+              <p class="text-xs text-muted mt-1 line-clamp-2 leading-relaxed">${escapeHtml(def.desc)}</p>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex items-center justify-between text-[11px] font-semibold text-muted mb-1">
+                <span>Прогрес</span>
+                <span class="tabular text-ink">${progressVal} / ${def.target} ${def.unit}</span>
+              </div>
+              <div class="w-full h-1.5 bg-subtle rounded-full overflow-hidden">
+                <div class="h-full ${isUnlocked ? 'bg-success' : 'bg-accent'} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          `;
+          carousel.appendChild(slide);
+        });
+        bindCard3DTilt(carousel);
+      }
+
+      // 2. Render Full Achievements Grid
+      const grid = document.getElementById('achievements-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const filtered = ACHIEVEMENT_DEFS.filter((def) => {
+        const isUnlocked = !!state.unlockedAchievements[def.id];
+        if (state.achFilter === 'unlocked') return isUnlocked;
+        if (state.achFilter === 'locked') return !isUnlocked;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full card-surface p-6 text-center">
+            <p class="text-xs text-muted">У цій категорії поки немає нагород.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach((def) => {
+        const unlockedAt = state.unlockedAchievements[def.id];
+        const isUnlocked = !!unlockedAt;
+        const progressVal = def.evaluate(ctx);
+        const pct = Math.min(100, Math.round((progressVal / def.target) * 100));
+        const colors = getBadgeColorClasses(def.color, isUnlocked);
+
+        let dateBadge = '';
+        if (isUnlocked) {
+          const d = new Date(unlockedAt);
+          const dateStr = d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
+          dateBadge = `<span class="text-[11px] font-semibold text-success">Відкрито ${dateStr}</span>`;
+        } else {
+          dateBadge = `<span class="tabular text-[11px] font-semibold text-muted">${progressVal} / ${def.target} ${def.unit}</span>`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `card-surface card-tilt reveal-item p-4 flex flex-col justify-between ${isUnlocked ? colors.border : 'opacity-90'}`;
+        card.innerHTML = `
+          <div class="flex items-start gap-3.5">
+            <div class="w-12 h-12 rounded-2xl ${colors.bg} ${colors.text} flex items-center justify-center shrink-0">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.1">
+                ${def.icon}
+              </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <h4 class="text-sm font-bold text-ink truncate">${escapeHtml(def.title)}</h4>
+                ${!isUnlocked ? `
+                  <svg class="w-3.5 h-3.5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                ` : ''}
+              </div>
+              <p class="text-xs text-muted mt-1 leading-relaxed">${escapeHtml(def.desc)}</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-borderline/60">
+            <div class="flex items-center justify-between mb-1.5">
+              ${dateBadge}
+              <span class="tabular text-[11px] font-bold ${isUnlocked ? 'text-success' : 'text-ink'}">${pct}%</span>
+            </div>
+            <div class="w-full h-1.5 bg-subtle rounded-full overflow-hidden">
+              <div class="h-full ${isUnlocked ? 'bg-success' : 'bg-accent'} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      observeReveals(grid);
+      bindCard3DTilt(grid);
+    }
+
+    function triggerCelebration(unlockedList) {
+      const primary = unlockedList[0];
+      const colors = getBadgeColorClasses(primary.color, true);
+
+      const badgeWrap = document.getElementById('celebration-badge-wrap');
+      badgeWrap.className = `badge-pop mx-auto w-20 h-20 rounded-3xl ${colors.bg} ${colors.text} flex items-center justify-center mb-4`;
+      badgeWrap.innerHTML = `
+        <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          ${primary.icon}
+        </svg>
+      `;
+
+      document.getElementById('celebration-title').textContent = primary.title;
+      document.getElementById('celebration-desc').textContent = primary.desc;
+
+      const extraEl = document.getElementById('celebration-extra-count');
+      if (unlockedList.length > 1) {
+        extraEl.textContent = `+ ще ${unlockedList.length - 1} нов${unlockedList.length - 1 === 1 ? 'а нагорода' : 'і нагороди'} відкрито!`;
+        extraEl.classList.remove('hidden');
+      } else {
+        extraEl.classList.add('hidden');
+      }
+
+      // Generate solid-color SVG/CSS confetti particles (zero gradients)
+      const container = document.getElementById('confetti-container');
+      container.innerHTML = '';
+      const palette = ['#0071E3', '#34C759', '#FF9500', '#FF3B30', '#7C3AED'];
+      for (let i = 0; i < 28; i++) {
+        const piece = document.createElement('span');
+        piece.className = 'confetti-piece';
+        const angle = (Math.PI * 2 * i) / 28 + (Math.random() - 0.5) * 0.4;
+        const dist = 80 + Math.random() * 110;
+        const tx = Math.cos(angle) * dist;
+        const ty = Math.sin(angle) * dist - 20;
+        const rot = (Math.random() - 0.5) * 360;
+
+        piece.style.left = '50%';
+        piece.style.top = '36%';
+        piece.style.backgroundColor = palette[i % palette.length];
+        piece.style.setProperty('--tx', `${tx.toFixed(1)}px`);
+        piece.style.setProperty('--ty', `${ty.toFixed(1)}px`);
+        piece.style.setProperty('--rot', `${rot.toFixed(0)}deg`);
+        container.appendChild(piece);
+      }
+
+      document.getElementById('celebration-modal').classList.add('open');
+    }
+
+    /* ==========================================================================
+       TAB 2: SCHEDULE & ICS EXPORT
+       ========================================================================== */
+    function renderSchedule() {
+      const container = document.getElementById('schedule-list');
+      container.innerHTML = '';
+
+      let activeCount = 0;
+
+      state.schedule.forEach((day, idx) => {
+        if (day.active) activeCount++;
+
+        const card = document.createElement('div');
+        card.className = `card-surface card-tilt reveal-item p-4 ${day.active ? 'border-accent/40' : ''}`;
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <span class="w-10 h-10 rounded-2xl font-bold text-sm flex items-center justify-center shrink-0 ${
+                day.active ? 'bg-accent text-white' : 'bg-subtle text-muted'
+              }">
+                ${day.short}
+              </span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm font-bold text-ink">${day.name}</h3>
+                  <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                    day.active ? 'bg-accentSoft text-accent' : 'bg-subtle text-muted'
+                  }">
+                    ${day.active ? 'Тренування' : 'Відпочинок'}
+                  </span>
+                </div>
+                <input type="text" value="${escapeHtml(day.focus)}"
+                  onchange="updateScheduleFocus(${idx}, this.value)"
+                  class="mt-1 w-full text-xs text-muted bg-transparent border-b border-transparent focus:border-accent focus:text-ink focus:outline-none" />
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0">
+              <input type="time" value="${day.time}"
+                onchange="updateScheduleTime(${idx}, this.value)"
+                class="tabular px-2.5 py-1.5 rounded-xl bg-subtle border border-borderline text-xs font-semibold text-ink focus:outline-none focus:border-accent" />
+
+              <button onclick="toggleScheduleDay(${idx})" aria-label="Перемкнути день тренування"
+                class="pressable w-12 h-7 rounded-full p-0.5 transition-colors duration-200 ${
+                  day.active ? 'bg-success' : 'bg-borderline'
+                }">
+                <div class="w-6 h-6 rounded-full bg-white shadow-xs transition-transform duration-200 ${
+                  day.active ? 'translate-x-5' : 'translate-x-0'
+                }"></div>
+              </button>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      observeReveals(container);
+      bindCard3DTilt(container);
+      document.getElementById('active-days-badge').textContent = `${activeCount} дні / тиж`;
+    }
+
+    function toggleScheduleDay(idx) {
+      state.schedule[idx].active = !state.schedule[idx].active;
+      persistSchedule();
+      renderSchedule();
+    }
+
+    function updateScheduleTime(idx, val) {
+      state.schedule[idx].time = val || '18:30';
+      persistSchedule();
+    }
+
+    function updateScheduleFocus(idx, val) {
+      state.schedule[idx].focus = val.trim() || 'Тренування';
+      persistSchedule();
+    }
+
+    function downloadICS() {
+      const icsDayMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
+      const activeDays = state.schedule.filter(d => d.active);
+
+      if (activeDays.length === 0) {
+        showToast('Увімкни хоча б один день тренувань', 'error');
+        return;
+      }
+
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const dtStamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}00Z`;
+
+      let events = '';
+      activeDays.forEach((day) => {
+        const [hh, mm] = day.time.split(':').map(Number);
+        const start = new Date();
+        const diff = (day.dayIndex + 7 - start.getDay()) % 7;
+        start.setDate(start.getDate() + diff);
+        start.setHours(hh || 18, mm || 30, 0, 0);
+
+        const end = new Date(start.getTime() + 40 * 60000);
+        const formatLocal = (d) =>
+          `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+
+        events += [
+          'BEGIN:VEVENT',
+          `UID:wt-${day.dayIndex}-${Date.now()}@workout-tracker`,
+          `DTSTAMP:${dtStamp}`,
+          `DTSTART:${formatLocal(start)}`,
+          `DTEND:${formatLocal(end)}`,
+          `RRULE:FREQ=WEEKLY;BYDAY=${icsDayMap[day.dayIndex]}`,
+          `SUMMARY:Силове тренування (${day.short})`,
+          `DESCRIPTION:${day.focus}`,
+          'BEGIN:VALARM',
+          'TRIGGER:-PT15M',
+          'ACTION:DISPLAY',
+          'DESCRIPTION:Час тренування через 15 хвилин',
+          'END:VALARM',
+          'END:VEVENT'
+        ].join('\r\n') + '\r\n';
+      });
+
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Workout Tracker PWA//UK',
+        'CALSCALE:GREGORIAN',
+        events.trim(),
+        'END:VCALENDAR'
+      ].join('\r\n');
+
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workout-schedule.ics';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Файл календаря .ics завантажено');
+    }
+
+    function openScheduleJsonModal() {
+      const payload = {
+        updatedAt: new Date().toISOString(),
+        schedule: state.schedule.filter(d => d.active).map(d => ({
+          dayOfWeek: d.dayIndex,
+          dayName: d.name,
+          time: d.time,
+          focus: d.focus
+        }))
+      };
+      document.getElementById('schedule-json-preview').value = JSON.stringify(payload, null, 2);
+      document.getElementById('json-modal').classList.add('open');
+    }
+
+    function copyScheduleJson() {
+      const textarea = document.getElementById('schedule-json-preview');
+      textarea.select();
+      document.execCommand('copy');
+      showToast('JSON скопійовано в буфер');
+    }
+
+    /* ==========================================================================
+       TAB 3: PROGRESS, LIVE ODOMETER COUNTERS, SVG CHART & HISTORY
+       ========================================================================== */
+    function setChartMetric(metric) {
+      state.chartMetric = metric;
+      ['duration', 'calories', 'heartRate'].forEach((m) => {
+        const btn = document.getElementById(`seg-${m}`);
+        if (m === metric) {
+          btn.className = 'pressable px-3 py-1.5 rounded-lg text-xs font-semibold bg-surface text-ink shadow-xs';
+        } else {
+          btn.className = 'pressable px-3 py-1.5 rounded-lg text-xs font-semibold text-muted';
+        }
+      });
+      renderChart();
+    }
+
+    function renderProgress() {
+      const totalWorkouts = state.history.length;
+      const totalMinutes = state.history.reduce((acc, w) => acc + (w.durationMinutes || 0), 0);
+      const totalCalories = state.history.reduce((acc, w) => acc + (w.calories || 0), 0);
+      const hrEntries = state.history.filter(w => w.heartRate > 0);
+      const avgHr = hrEntries.length > 0
+        ? Math.round(hrEntries.reduce((acc, w) => acc + w.heartRate, 0) / hrEntries.length)
+        : 0;
+
+      // Smooth monobank-style odometer digit interpolation
+      animateCounter(document.getElementById('stat-total-workouts'), totalWorkouts, '');
+      animateCounter(document.getElementById('stat-total-duration'), totalMinutes, ' хв');
+      animateCounter(document.getElementById('stat-total-calories'), totalCalories, ' ккал');
+
+      const hrEl = document.getElementById('stat-avg-hr');
+      if (avgHr > 0) {
+        animateCounter(hrEl, avgHr, ' уд/хв');
+      } else {
+        hrEl.dataset.numValue = '0';
+        hrEl.textContent = '—';
+      }
+
+      renderChart();
+      renderHistoryList();
+    }
+
+    function renderChart() {
+      const container = document.getElementById('chart-container');
+      const recent = [...state.history].slice(0, 8).reverse();
+
+      if (recent.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6">
+            <p class="text-sm font-medium text-muted">Ще немає збережених тренувань</p>
+            <p class="text-xs text-muted mt-1">Заверши перше тренування, щоб побачити графік</p>
+          </div>
+        `;
+        return;
+      }
+
+      const metricKey = state.chartMetric === 'duration'
+        ? 'durationMinutes'
+        : state.chartMetric === 'calories'
+          ? 'calories'
+          : 'heartRate';
+
+      const unitLabel = state.chartMetric === 'duration'
+        ? 'хв'
+        : state.chartMetric === 'calories'
+          ? 'ккал'
+          : 'уд/хв';
+
+      const values = recent.map(item => Number(item[metricKey]) || 0);
+      const maxVal = Math.max(...values, 10);
+
+      const width = 560;
+      const height = 180;
+      const padLeft = 16;
+      const padRight = 16;
+      const padTop = 26;
+      const padBottom = 28;
+      const chartW = width - padLeft - padRight;
+      const chartH = height - padTop - padBottom;
+
+      const stepX = chartW / Math.max(recent.length, 1);
+      const barWidth = Math.min(34, stepX * 0.52);
+
+      let barsSvg = '';
+      recent.forEach((item, i) => {
+        const val = values[i];
+        const barH = Math.max(6, (val / maxVal) * chartH);
+        const x = padLeft + i * stepX + (stepX - barWidth) / 2;
+        const y = padTop + chartH - barH;
+        const d = new Date(item.date);
+        const dateLabel = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        barsSvg += `
+          <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barH.toFixed(1)}" rx="7" fill="#0071E3" />
+          <text x="${(x + barWidth / 2).toFixed(1)}" y="${(y - 6).toFixed(1)}" text-anchor="middle" fill="#1D1D1F" font-size="11" font-weight="600">${val}</text>
+          <text x="${(x + barWidth / 2).toFixed(1)}" y="${height - 8}" text-anchor="middle" fill="#6E6E73" font-size="11">${dateLabel}</text>
+        `;
+      });
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" class="w-full h-full overflow-visible">
+          <line x1="${padLeft}" y1="${padTop + chartH}" x2="${width - padRight}" y2="${padTop + chartH}" stroke="#E5E5EA" stroke-width="1" />
+          <line x1="${padLeft}" y1="${padTop + chartH / 2}" x2="${width - padRight}" y2="${padTop + chartH / 2}" stroke="#E5E5EA" stroke-dasharray="4 4" stroke-width="1" />
+          ${barsSvg}
+        </svg>
+      `;
+      document.getElementById('chart-subtitle').textContent = `Останні ${recent.length} тренувань (${unitLabel})`;
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('history-list');
+      container.innerHTML = '';
+
+      if (state.history.length === 0) {
+        container.innerHTML = `
+          <div class="card-surface p-6 text-center">
+            <p class="text-sm text-muted">Історія порожня. Твої результати з’являться тут після першого збереження.</p>
+          </div>
+        `;
+        return;
+      }
+
+      state.history.forEach((item, idx) => {
+        const d = new Date(item.date);
+        const dateStr = d.toLocaleDateString('uk-UA', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        const exercisesHtml = (item.exercises || []).map(ex => `
+          <div class="flex items-center justify-between py-1.5 text-xs border-b border-borderline/60 last:border-none">
+            <span class="${ex.completed ? 'text-ink font-medium' : 'text-muted'}">
+              ${ex.completed ? '✓' : '•'} ${escapeHtml(ex.name)}
+            </span>
+            <span class="tabular text-muted font-semibold shrink-0 ml-2">
+              ${ex.sets}×${escapeHtml(String(ex.reps))}${ex.weight > 0 ? ` · ${ex.weight} кг` : ''}
+            </span>
+          </div>
+        `).join('');
+
+        const card = document.createElement('div');
+        card.className = 'card-surface card-tilt reveal-item p-4';
+        card.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <button onclick="toggleHistoryDetails(${idx})" class="flex-1 text-left">
+              <p class="text-sm font-bold text-ink capitalize">${dateStr}</p>
+              <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                <span class="tabular px-2.5 py-0.5 rounded-lg bg-accentSoft text-accent text-xs font-semibold">${item.durationMinutes} хв</span>
+                <span class="tabular px-2.5 py-0.5 rounded-lg bg-warningSoft text-warning text-xs font-semibold">${item.calories} ккал</span>
+                <span class="tabular px-2.5 py-0.5 rounded-lg bg-dangerSoft text-danger text-xs font-semibold">${item.heartRate} уд/хв</span>
+              </div>
+            </button>
+
+            <div class="flex items-center gap-1.5">
+              <button onclick="toggleHistoryDetails(${idx})" aria-label="Деталі" class="pressable w-8 h-8 rounded-xl bg-subtle flex items-center justify-center text-muted">
+                <svg id="hist-chevron-${idx}" class="w-4 h-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <button onclick="deleteHistoryItem(${idx})" aria-label="Видалити запис" class="pressable w-8 h-8 rounded-xl bg-subtle hover:bg-dangerSoft text-muted hover:text-danger flex items-center justify-center text-xs">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <div id="hist-details-${idx}" class="accordion-content">
+            <div class="accordion-inner">
+              <div class="mt-3 pt-3 border-t border-borderline">
+                ${exercisesHtml || '<p class="text-xs text-muted">Немає деталей вправ</p>'}
+              </div>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      observeReveals(container);
+      bindCard3DTilt(container);
+    }
+
+    function toggleHistoryDetails(idx) {
+      const el = document.getElementById(`hist-details-${idx}`);
+      const chev = document.getElementById(`hist-chevron-${idx}`);
+      el.classList.toggle('expanded');
+      chev.style.transform = el.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    function deleteHistoryItem(idx) {
+      state.history.splice(idx, 1);
+      persistHistory();
+      renderProgress();
+      showToast('Запис видалено', 'info');
+    }
+
+    function exportBackupJSON() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        schedule: state.schedule,
+        history: state.history,
+        unlockedAchievements: state.unlockedAchievements
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `workouts-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Резервну копію JSON завантажено');
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (Array.isArray(parsed.history)) {
+            state.history = parsed.history;
+            persistHistory();
+          }
+          if (Array.isArray(parsed.schedule)) {
+            state.schedule = parsed.schedule;
+            persistSchedule();
+            renderSchedule();
+          }
+          if (parsed.unlockedAchievements && typeof parsed.unlockedAchievements === 'object') {
+            state.unlockedAchievements = parsed.unlockedAchievements;
+            persistAchievements();
+          }
+          evaluateAchievements(false);
+          renderAchievements();
+          renderProgress();
+          showToast('Дані успішно імпортовано');
+        } catch (err) {
+          showToast('Некоректний JSON-файл', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* ==========================================================================
+       GITHUB REST API SYNC (PRIVATE REPO JSON)
+       ========================================================================== */
+    function openSyncModal() {
+      document.getElementById('gh-feedback').classList.add('hidden');
+      document.getElementById('sync-modal').classList.add('open');
+    }
+
+    function updateSyncStatusBadge() {
+      const dot = document.getElementById('sync-status-dot');
+      const label = document.getElementById('sync-status-label');
+      if (state.ghConfig.token && state.ghConfig.repo) {
+        dot.className = 'w-2 h-2 rounded-full bg-success';
+        label.textContent = 'GitHub Sync';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-warning';
+        label.textContent = 'Локально';
+      }
+    }
+
+    function setGhFeedback(msg, isError = false) {
+      const box = document.getElementById('gh-feedback');
+      box.textContent = msg;
+      box.className = `text-xs font-medium px-3.5 py-2.5 rounded-xl ${
+        isError ? 'bg-dangerSoft text-danger' : 'bg-successSoft text-success'
+      }`;
+      box.classList.remove('hidden');
+    }
+
+    async function saveGitHubConfigAndSync() {
+      state.ghConfig = {
+        token: document.getElementById('gh-token').value.trim(),
+        owner: document.getElementById('gh-owner').value.trim() || 'y-lebid',
+        repo: document.getElementById('gh-repo').value.trim(),
+        path: document.getElementById('gh-path').value.trim() || 'data/workouts.json'
+      };
+
+      localStorage.setItem(STORAGE_KEYS.GH_CONFIG, JSON.stringify(state.ghConfig));
+      updateSyncStatusBadge();
+
+      // Check if cloud_backup achievement unlocked
+      const newly = evaluateAchievements(true);
+      renderAchievements();
+
+      if (!state.ghConfig.token || !state.ghConfig.repo) {
+        setGhFeedback('Налаштування збережено. Вкажи токен і назву репозиторію для хмарної синхронізації.', true);
+        return;
+      }
+
+      await pushToGitHub(false);
+      if (newly.length > 0) {
+        closeModal('sync-modal');
+        triggerCelebration(newly);
+      }
+    }
+
+    async function pushToGitHub(silent = false) {
+      const { token, owner, repo, path } = state.ghConfig;
+      if (!token || !owner || !repo) return;
+
+      const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path}`;
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      };
+
+      try {
+        if (!silent) setGhFeedback('Синхронізація з GitHub...', false);
+
+        // 1. Check if file already exists to retrieve its SHA
+        let sha = null;
+        const getRes = await fetch(apiUrl, { headers });
+        if (getRes.ok) {
+          const existing = await getRes.json();
+          sha = existing.sha;
+        } else if (getRes.status !== 404) {
+          throw new Error(`Помилка доступу (${getRes.status}). Перевір токен та назву репо.`);
+        }
+
+        // 2. Encode UTF-8 JSON safely to Base64
+        const payload = {
+          updatedAt: new Date().toISOString(),
+          schedule: state.schedule,
+          history: state.history,
+          unlockedAchievements: state.unlockedAchievements
+        };
+        const jsonStr = JSON.stringify(payload, null, 2);
+        const base64Content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+        const putBody = {
+          message: `Оновлення тренувань (${new Date().toLocaleDateString('uk-UA')})`,
+          content: base64Content
+        };
+        if (sha) putBody.sha = sha;
+
+        const putRes = await fetch(apiUrl, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(putBody)
+        });
+
+        if (!putRes.ok) {
+          const errData = await putRes.json().catch(() => ({}));
+          throw new Error(errData.message || `Помилка запису (${putRes.status})`);
+        }
+
+        if (!silent) setGhFeedback('Успішно синхронізовано з приватним репозиторієм GitHub!');
+        showToast('Синхронізовано з GitHub');
+      } catch (err) {
+        if (!silent) setGhFeedback(err.message, true);
+        showToast('Помилка GitHub Sync', 'error');
+      }
+    }
+
+    async function pullFromGitHub() {
+      const token = document.getElementById('gh-token').value.trim();
+      const owner = document.getElementById('gh-owner').value.trim() || 'y-lebid';
+      const repo = document.getElementById('gh-repo').value.trim();
+      const path = document.getElementById('gh-path').value.trim() || 'data/workouts.json';
+
+      if (!token || !repo) {
+        setGhFeedback('Вкажи токен і назву репозиторію.', true);
+        return;
+      }
+
+      const apiUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${path}`;
+
+      try {
+        setGhFeedback('Завантаження даних із GitHub...', false);
+        const res = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json'
+          }
+        });
+
+        if (!res.ok) {
+          throw new Error(`Файл не знайдено або немає доступу (${res.status})`);
+        }
+
+        const data = await res.json();
+        const decodedStr = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+        const parsed = JSON.parse(decodedStr);
+
+        if (Array.isArray(parsed.history)) {
+          state.history = parsed.history;
+          persistHistory();
+        }
+        if (Array.isArray(parsed.schedule)) {
+          state.schedule = parsed.schedule;
+          persistSchedule();
+          renderSchedule();
+        }
+        if (parsed.unlockedAchievements && typeof parsed.unlockedAchievements === 'object') {
+          state.unlockedAchievements = parsed.unlockedAchievements;
+          persistAchievements();
+        }
+        evaluateAchievements(false);
+        renderAchievements();
+        renderProgress();
+        setGhFeedback('Дані успішно завантажено з GitHub!');
+        showToast('Дані оновлено з GitHub');
+      } catch (err) {
+        setGhFeedback(err.message, true);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
